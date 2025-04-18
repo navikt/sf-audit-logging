@@ -32,5 +32,5 @@ spec:
         value: "v62.0"
       - name: SF_TOKENHOST
         value: "https://test.salesforce.com/services/oauth2/token"
-envFrom:
-  - secret: sf-audit-logging
+    envFrom:
+      - secret: sf-audit-logging
