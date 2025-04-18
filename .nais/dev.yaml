@@ -1,7 +1,7 @@
 apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
-  name: template
+  name: sf-audit-logging
   namespace: teamcrm
   labels:
     team: teamcrm
@@ -21,7 +21,6 @@ spec:
   observability:
     logging:
       destinations:
-        - id: elastic
         - id: loki
   resources:
     limits:
@@ -29,27 +28,12 @@ spec:
     requests:
       cpu: 10m
       memory: 512Mi
-#  ingresses:
-#    - "https://sf-mellomvare.template.intern.dev.nav.no"
-#  azure:
-#    application:
-#      enabled: true
-#      allowAllUsers: true
-#      tenant: trygdeetaten.no
-#      claims:
-#        extra:
-#          - azp_name
-#          - NAVident
-#    sidecar:
-#      enabled: false
-#  accessPolicy:
-#    inbound:
-#      rules:
-#        - application: salesforce
-#          namespace: teamcrm
-#          cluster: dev-external
-#  envFrom:
-#    - secret: template
+    ingresses:
+      - "https://sf-audit-logging.intern.dev.nav.no"
   env:
-    - name: AN_ENV
-      value: "a value in dev"
+    - name: SALESFORCE_API_VERSION
+      value: "v62.0"
+    - name: SF_TOKENHOST
+      value: 'https://test.salesforce.com/services/oauth2/token'
+  envFrom:
+    - secret: sf-audit-logging

@@ -1,6 +1,14 @@
+
 name: Build, push, and deploy
 
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - README.md
+      - Dockerfile-job
+      - .nais/job.yaml
+      - .github/workflows/deploy-job.yml
+  pull_request:
 
 jobs:
   test:
@@ -44,35 +52,20 @@ jobs:
         uses: nais/docker-build-push@v0
         id: docker-push
         with:
-          team: teamcrm # <- template: make sure this is correct namespace as well
+          team: teamcrm
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
-#  deploy-dev:
-#    name: Deploy sf-nada-crm to dev-gcp
-#    needs: build
-#    runs-on: ubuntu-latest
-#    permissions:
-#      id-token: write
-#      contents: read
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: nais/deploy/actions/deploy@v2
-#        env:
-#          CLUSTER: dev-gcp
-#          RESOURCE: .nais/dev.yaml
-#          VAR: image=${{ needs.build.outputs.image }},DEPLOY_CLUSTER=dev-gcp
-#  deploy-prod:
-#    name: Deploy sf-nada-crm to prod-gcp
-#    needs: build
-#    if: github.ref == 'refs/heads/main'
-#    runs-on: ubuntu-latest
-#    permissions:
-#      id-token: write
-#      contents: read
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: nais/deploy/actions/deploy@v2
-#        env:
-#          CLUSTER: prod-gcp
-#          RESOURCE: .nais/prod.yaml
-#          VAR: image=${{ needs.build.outputs.image }},DEPLOY_CLUSTER=prod-gcp
+  deploy-dev:
+    name: Deploy sf-audit-logging to dev-gcp
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/dev.yaml
+          VAR: image=${{ needs.build.outputs.image }},DEPLOY_CLUSTER=dev-gcp

@@ -1,4 +1,6 @@
-# sf-mellomvare-template
-Starting point for salesforce mellomvare
+# sf-audit-logging
+Henter LightningUriEvents fra Salesforce. 
+Identifiserer relevante oppslag og tilfører fødselsnummer
+Overfører loggene til Arcsight
 
-Use IDE find all search for "template", to get an idea what needs to be replaced
+Dette repoet skal etter hvert erstatte sf-audit
