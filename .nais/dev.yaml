@@ -36,4 +36,4 @@ spec:
     - name: SF_TOKENHOST
       value: 'https://test.salesforce.com/services/oauth2/token'
   envFrom:
-    - secret: sf-healthcheck
+    - secret: sf-audit-logging
