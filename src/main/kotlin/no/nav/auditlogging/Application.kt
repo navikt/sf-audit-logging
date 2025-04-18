@@ -1,4 +1,4 @@
-package no.nav.template
+package no.nav.auditlogging
 
 import mu.KotlinLogging
 import org.http4k.core.HttpHandler
@@ -13,15 +13,13 @@ import org.http4k.server.asServer
 
 object Application {
     private val log = KotlinLogging.logger { }
-
-    val cluster = env(env_NAIS_CLUSTER_NAME)
+    private val cluster = System.getenv(env_NAIS_CLUSTER_NAME) ?: "local"
 
     fun apiServer(port: Int): Http4kServer = api().asServer(ApacheServer(port))
 
     fun api(): HttpHandler = routes(
         "/internal/isAlive" bind Method.GET to { Response(OK) },
-        "/internal/isReady" bind Method.GET to { Response(OK) },
-        "/internal/metrics" bind Method.GET to Metrics.metricsHttpHandler,
+        "/internal/isReady" bind Method.GET to { Response(OK) }
     )
 
     fun start() {
