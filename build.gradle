@@ -6,12 +6,12 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '8.0.0'
 }
 
-group 'no.nav.template'
+group 'no.nav.auditlogging'
 version '0.1.1'
 
 jar {
     manifest {
-        attributes 'Main-Class': 'no.nav.template.BootstrapKt'
+        attributes 'Main-Class': 'no.nav.auditlogging.BootstrapKt'
     }
 }
 
@@ -21,7 +21,7 @@ shadowJar {
 }
 
 application {
-    mainClassName = 'no.nav.template.BootstrapKt'
+    mainClassName = 'no.nav.auditlogging.BootstrapKt'
 }
 
 repositories {
