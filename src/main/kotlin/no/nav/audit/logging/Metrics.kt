@@ -1,4 +1,4 @@
-package no.nav.auditlogging
+package no.nav.audit.logging
 
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.Counter
