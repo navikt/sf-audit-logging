@@ -19,7 +19,8 @@ object Application {
 
     fun api(): HttpHandler = routes(
         "/internal/isAlive" bind Method.GET to { Response(OK) },
-        "/internal/isReady" bind Method.GET to { Response(OK) }
+        "/internal/isReady" bind Method.GET to { Response(OK) },
+        "/internal/metrics" bind Method.GET to Metrics.metricsHttpHandler,
     )
 
     fun start() {
