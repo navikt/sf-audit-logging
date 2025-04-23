@@ -1,5 +1,6 @@
 package no.nav.sf.audit.logging.salesforce
 
+import com.google.gson.JsonParser
 import mu.KotlinLogging
 import no.nav.sf.audit.logging.config_SALESFORCE_API_VERSION
 import no.nav.sf.audit.logging.env
@@ -35,6 +36,28 @@ class DefaultSalesforceClient(
             try {
 
                 val response = client(request)
+                if (response.status.successful) {
+                    val obj = JsonParser.parseString(response.bodyString()).asJsonObject
+                    val recordEntries = obj["records"].asJsonArray
+                    result.addAll(
+                        recordEntries.map {
+                            UriEvent(
+                                it.asJsonObject["EventDate"].asString,
+                                it.asJsonObject["QueriedEntities"].asString,
+                                it.asJsonObject["RecordId"].asString,
+                                it.asJsonObject["Operation"].asString,
+                                it.asJsonObject["Username"].asString,
+                                it.asJsonObject["UserType"].asString
+                            )
+                        }
+                    )
+                    totalSize = obj["totalSize"].asInt
+                    done = obj["done"].asBoolean
+                    if (!done) nextRecordsUrl = obj["nextRecordsUrl"].asString
+                } else {
+                    log.error { "Failed to fetch URI events - response ${response.status.code}:${response.bodyString()}" }
+                    done = true
+                }
             } catch (e: Exception) {
                 log.error { "Exception while fetching URI events: ${e.message}" }
                 done = true
