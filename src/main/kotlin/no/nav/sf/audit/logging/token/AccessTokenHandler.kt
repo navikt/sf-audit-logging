@@ -6,6 +6,4 @@ package no.nav.sf.audit.logging.token
  *
  * Fetches and caches access token, also retrieves instance url
  */
-interface AccessTokenHandler {
-
-}
+interface AccessTokenHandler
