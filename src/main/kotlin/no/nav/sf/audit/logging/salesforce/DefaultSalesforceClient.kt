@@ -33,6 +33,8 @@ class DefaultSalesforceClient(
                 .header("Authorization", "Bearer ${accessTokenHandler.accessToken}")
                 .header("Accept", "application/json")
             try {
+
+                val response = client(request)
             } catch (e: Exception) {
                 log.error { "Exception while fetching URI events: ${e.message}" }
                 done = true
