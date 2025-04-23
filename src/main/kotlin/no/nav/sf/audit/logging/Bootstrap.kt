@@ -1,3 +1,3 @@
-package no.nav.audit.logging
+package no.nav.sf.audit.logging
 
 fun main() = Application.start()

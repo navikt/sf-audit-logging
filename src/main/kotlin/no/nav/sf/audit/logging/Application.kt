@@ -1,4 +1,4 @@
-package no.nav.audit.logging
+package no.nav.sf.audit.logging
 
 import mu.KotlinLogging
 import org.http4k.core.HttpHandler

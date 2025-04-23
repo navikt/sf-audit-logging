@@ -1,4 +1,4 @@
-package no.nav.audit.logging
+package no.nav.sf.audit.logging
 
 import java.io.File
 import java.io.FileInputStream
