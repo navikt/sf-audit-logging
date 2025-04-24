@@ -22,7 +22,7 @@ object Application {
         "/internal/isAlive" bind Method.GET to { Response(OK) },
         "/internal/isReady" bind Method.GET to { Response(OK) },
         "/internal/metrics" bind Method.GET to Metrics.metricsHttpHandler,
-        "/internal/fetchAndTransfer" bind Method.GET to auditLogHandler.fetchAndTransfer()
+        "/internal/fetchAndTransfer" bind Method.GET to auditLogHandler.fetchAndTransfer
     )
 
     fun start() {

@@ -12,8 +12,8 @@ import org.slf4j.Logger
 
 class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSalesforceClient(), private val log: Logger = KotlinLogging.logger { }) {
 
-    fun fetchAndTransfer(): HttpHandler {
+    val fetchAndTransfer: HttpHandler ={
         val uriEvents = salesforceClient.fetchUriEvents()
-        return { Response(OK).body(Body(uriEvents.size.toString())) }
+        Response(OK).body(Body(uriEvents.size.toString()))
     }
 }
