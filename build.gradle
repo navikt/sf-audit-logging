@@ -52,7 +52,10 @@ dependencies {
     implementation "com.nimbusds:nimbus-jose-jwt:9.37.2"
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.1'
+    testImplementation 'io.mockk:mockk:1.13.14'
+    testImplementation "org.jetbrains.kotlin:kotlin-stdlib:1.7.10"
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.1'
+
 }
 
 test {
