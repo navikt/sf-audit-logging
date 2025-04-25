@@ -4,9 +4,10 @@ import mu.KotlinLogging
 import java.util.Properties
 
 class ObjectFilter {
+    val objectsToBeLogged get() = fetchObjectsToBeLogged()
     private val log = KotlinLogging.logger { }
 
-    fun getObjectsToBeLogged(): Properties {
+    private fun fetchObjectsToBeLogged(): Properties {
         val properties = Properties()
         try {
             val inputStream = ObjectFilter::class.java.getResourceAsStream("/objects.yaml")
