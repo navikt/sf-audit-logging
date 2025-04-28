@@ -11,9 +11,14 @@ import org.http4k.core.Status.Companion.OK
 import org.slf4j.Logger
 
 class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSalesforceClient(), private val log: Logger = KotlinLogging.logger { }) {
-
+    val objectFilter = ObjectFilter()
     val fetchAndTransfer: HttpHandler = {
         val uriEvents = salesforceClient.fetchUriEvents()
+        val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(uriEvents)
+        val groupedUriEvents = filteredUriEvents.groupBy { it.entity }
+        for ((entity, events) in groupedUriEvents) {
+            log.info("Processing entity: $entity with ${events.size} events")
+        }
         Response(OK).body(Body(uriEvents.size.toString()))
     }
 }
