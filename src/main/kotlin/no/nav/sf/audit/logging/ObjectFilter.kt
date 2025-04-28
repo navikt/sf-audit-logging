@@ -1,11 +1,23 @@
 package no.nav.sf.audit.logging
 
 import mu.KotlinLogging
+import no.nav.sf.audit.logging.salesforce.UriEvent
 import java.util.Properties
 
 class ObjectFilter {
     val objectsToBeLogged get() = fetchObjectsToBeLogged()
+
     private val log = KotlinLogging.logger { }
+
+    fun filterUriEventsToHaveObjectsToBeLogged(uriEvents: List<UriEvent>): List<UriEvent> {
+        val filteredUriEvents = mutableListOf<UriEvent>()
+        for (uriEvent in uriEvents) {
+            if (objectsToBeLogged.containsKey(uriEvent.entity)) {
+                filteredUriEvents.add(uriEvent)
+            }
+        }
+        return filteredUriEvents
+    }
 
     private fun fetchObjectsToBeLogged(): Properties {
         val properties = Properties()
