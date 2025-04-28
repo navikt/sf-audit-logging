@@ -10,26 +10,17 @@ class ObjectFilter {
     private val log = KotlinLogging.logger { }
 
     fun filterUriEventsToHaveObjectsToBeLogged(uriEvents: List<UriEvent>): List<UriEvent> {
-        val filteredUriEvents = mutableListOf<UriEvent>()
-        for (uriEvent in uriEvents) {
-            if (objectsToBeLogged.containsKey(uriEvent.entity)) {
-                filteredUriEvents.add(uriEvent)
-            }
-        }
-        return filteredUriEvents
+        return uriEvents.filter { objectsToBeLogged.containsKey(it.entity) }
     }
 
     private fun fetchObjectsToBeLogged(): Properties {
-        val properties = Properties()
-        try {
-            val inputStream = ObjectFilter::class.java.getResourceAsStream("/objects.yaml")
-                ?: throw IllegalStateException("Cannot find objects.yaml in resources")
-            inputStream.use {
-                properties.load(it)
-            }
+        return try {
+            ObjectFilter::class.java.getResourceAsStream("/objects.yaml")?.use { inputStream ->
+                Properties().apply { load(inputStream) }
+            } ?: throw IllegalStateException("Cannot find objects.yaml in resources")
         } catch (e: Exception) {
             log.error(e) { "Failed to load objects.yaml" }
+            Properties()
         }
-        return properties
     }
 }
