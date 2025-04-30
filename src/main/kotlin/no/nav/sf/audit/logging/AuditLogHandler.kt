@@ -17,11 +17,7 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSa
         val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(uriEvents)
         val groupedUriEvents = filteredUriEvents.groupBy { it.entity }
         for ((entity, events) in groupedUriEvents) {
-            val json = mapOf(
-                "object" to entity,
-                "eventCount" to events.size
-            )
-            log.info("Processing: $json")
+            Metrics.uriEentLogs.labels(entity).inc(events.size.toDouble())
         }
         Response(OK).body(Body(uriEvents.size.toString()))
     }
