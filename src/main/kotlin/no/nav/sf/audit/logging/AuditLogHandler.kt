@@ -18,6 +18,7 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSa
         val groupedUriEvents = filteredUriEvents.groupBy { it.entity }
         for ((entity, events) in groupedUriEvents) {
             Metrics.uriEentLogs.labels(entity).inc(events.size.toDouble())
+            log.info("Entity: $entity, Count: ${events.size}")
         }
         Response(OK).body(Body(uriEvents.size.toString()))
     }

@@ -21,7 +21,7 @@ class DefaultSalesforceClient(
     private val apiVersion = env(config_SALESFORCE_API_VERSION)
 
     override fun fetchUriEvents(): MutableList<UriEvent> {
-        val soqlQuery = "SELECT EventDate, Operation, QueriedEntities, RecordId, Username, UserType FROM LightningUriEvent WHERE EventDate=today"
+        val soqlQuery = "SELECT EventDate, Operation, QueriedEntities, RecordId, Username, UserType FROM LightningUriEvent WHERE EventDate=yesterday"
         val encodedQuery = URLEncoder.encode(soqlQuery, "UTF-8")
         var done = false
         var nextRecordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
