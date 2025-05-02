@@ -14,10 +14,19 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSa
         Metrics.clearUriEventsCounter()
         val uriEvents = salesforceClient.fetchUriEvents()
         val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(uriEvents)
+        var totalNumberOfLoggedRecords = 0
+
         val groupedUriEvents = filteredUriEvents.groupBy { it.entity }
         for ((entity, events) in groupedUriEvents) {
-            Metrics.uriEvents.labels(entity).inc(events.size.toDouble())
+
+            val personIdentsResponse = salesforceClient.fetchPersonIdents(
+                objectName = entity,
+                personIdentSelectClause = objectFilter.objectsToBeLogged.getProperty(entity),
+                recordIds = events.map { it.recordId }
+            )
+            totalNumberOfLoggedRecords += personIdentsResponse.personIdentByRecordId.size
+            Metrics.uriEvents.labels(entity).inc(personIdentsResponse.personIdentByRecordId.size.toDouble())
         }
-        Response(OK).body(Body(uriEvents.size.toString()))
+        Response(OK).body(Body(totalNumberOfLoggedRecords.toString()))
     }
 }
