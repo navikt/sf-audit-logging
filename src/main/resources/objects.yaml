@@ -1,2 +1,2 @@
-Account: Person__r.Name
-Case: Account.Person__r.Name
+Account: INT_PersonIdent__c
+Case: Account.INT_PersonIdent__c

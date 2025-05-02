@@ -9,9 +9,9 @@ class ObjectFilterTest {
     val classUnderTest = ObjectFilter()
 
     @Test
-    fun `Should refer to the Person Name field for Accounts`() {
+    fun `Should refer to the person ident field on Accounts`() {
         val result = classUnderTest.objectsToBeLogged.getProperty("Account")
-        assertEquals(result, "Person__r.Name")
+        assertEquals(result, "INT_PersonIdent__c")
     }
 
     @Test

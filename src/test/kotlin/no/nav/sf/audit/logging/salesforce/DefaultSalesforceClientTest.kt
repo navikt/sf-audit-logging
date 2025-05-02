@@ -42,4 +42,19 @@ class DefaultSalesforceClientTest {
         val result = classUnderTest.fetchUriEvents()
         assertEquals(expectedDateTime, result[0].eventDate)
     }
+
+    @Test
+    fun `should return a map with one person ident when one of the two accounts has a person ident in Salesforce`() {
+        // only the first account has a person ident
+        val mockResponseBody = "{\"totalSize\":2,\"done\":true,\"records\":[{\"attributes\":{\"type\":\"Account\",\"url\":\"/services/data/v62.0/sobjects/Account/0015t00000HvTteAAF\"},\"Id\":\"0015t00000HvTteAAF\",\"INT_PersonIdent__c\":\"14097018384\"},{\"attributes\":{\"type\":\"Account\",\"url\":\"/services/data/v62.0/sobjects/Account/0015t00000I34yqAAB\"},\"Id\":\"0015t00000I34yqAAB\",\"INT_PersonIdent__c\":null}]}"
+        val mockResponse = Response(Status.OK).body(mockResponseBody)
+        every { client(any()) } returns mockResponse
+
+        val recordIds = mutableListOf("0015t00000HvTteAAF", "0015t00000I34yqAAB")
+        val result = classUnderTest.fetchPersonIdents("Account", "INT_PersonIdent__c", recordIds)
+
+        assertEquals(1, result.personIdentByRecordId.size)
+        assertEquals("14097018384", result.personIdentByRecordId["0015t00000HvTteAAF"])
+        assertEquals(1, result.numberOfRequests)
+    }
 }
