@@ -72,35 +72,31 @@ class DefaultSalesforceClient(
         personIdentSelectClause: String,
         recordIds: List<String>
     ): PersonIdentsResponse {
-
         val distinctRecordIds = recordIds.distinct()
-        var personIdentByRecordId = mutableMapOf<String, String>()
+        val personIdentByRecordId = mutableMapOf<String, String>()
         var numberOfRequests = 0
-        var numberOfRecords = 0
 
-        // fetch person idents in batches of 2000
-        while (numberOfRecords < distinctRecordIds.size) {
-            val currentRecordIdRange = distinctRecordIds.subList(numberOfRecords, minOf(numberOfRecords + 2000, distinctRecordIds.size))
-            numberOfRecords += currentRecordIdRange.size
+        distinctRecordIds.chunked(2000).forEach { currentRecordIdRange ->
             val soqlQuery = "SELECT Id, $personIdentSelectClause FROM $objectName WHERE Id IN (${currentRecordIdRange.joinToString(",")})"
             val encodedQuery = URLEncoder.encode(soqlQuery, "UTF-8")
-            var recordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
+            val recordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
 
             val request = org.http4k.core.Request(Method.GET, accessTokenHandler.instanceUrl + recordsUrl)
                 .header("Authorization", "Bearer ${accessTokenHandler.accessToken}")
                 .header("Accept", "application/json")
+
             val response = client(request)
             if (response.status.successful) {
-                val obj = JsonParser.parseString(response.bodyString()).asJsonObject
-                val recordEntries = obj["records"].asJsonArray
+                val recordEntries = JsonParser.parseString(response.bodyString())
+                    .asJsonObject["records"].asJsonArray
                 recordEntries.forEach {
                     val recordId = it.asJsonObject["Id"].asString
-                    val personIdent = it.asJsonObject["INT_PersonIdent__c"].takeIf { !it.isJsonNull }?.asString ?: ""
+                    val personIdent = it.asJsonObject["INT_PersonIdent__c"]
+                        .takeIf { !it.isJsonNull }?.asString.orEmpty()
                     if (personIdent.isNotEmpty()) {
                         personIdentByRecordId[recordId] = personIdent
                     }
                 }
-
                 numberOfRequests++
             } else {
                 log.error { "Failed to fetch person idents - response ${response.status.code}:${response.bodyString()}" }
