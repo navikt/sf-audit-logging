@@ -12,5 +12,5 @@ data class UriEvent(val eventDateString: String, val entity: String, val recordI
                 ZonedDateTime.parse(it, formatter)
             }
         }
-    val personIdent: String? = null
+    var personIdent: String? = null
 }
