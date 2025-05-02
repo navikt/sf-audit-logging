@@ -50,7 +50,7 @@ class DefaultSalesforceClientTest {
         val mockResponse = Response(Status.OK).body(mockResponseBody)
         every { client(any()) } returns mockResponse
 
-        val recordIds = mutableListOf("0015t00000HvTteAAF", "0015t00000I34yqAAB")
+        val recordIds = listOf("0015t00000HvTteAAF", "0015t00000I34yqAAB")
         val result = classUnderTest.fetchPersonIdents("Account", "INT_PersonIdent__c", recordIds)
 
         assertEquals(1, result.personIdentByRecordId.size)

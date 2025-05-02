@@ -70,7 +70,7 @@ class DefaultSalesforceClient(
     override fun fetchPersonIdents(
         objectName: String,
         personIdentSelectClause: String,
-        recordIds: MutableList<String>
+        recordIds: List<String>
     ): PersonIdentsResponse {
 
         val distinctRecordIds = recordIds.distinct()
@@ -78,7 +78,7 @@ class DefaultSalesforceClient(
         var numberOfRequests = 0
         var numberOfRecords = 0
 
-        //fetch person idents in batches of 2000
+        // fetch person idents in batches of 2000
         while (numberOfRecords < distinctRecordIds.size) {
             val currentRecordIdRange = distinctRecordIds.subList(numberOfRecords, minOf(numberOfRecords + 2000, distinctRecordIds.size))
             numberOfRecords += currentRecordIdRange.size
@@ -104,7 +104,7 @@ class DefaultSalesforceClient(
                 numberOfRequests++
             } else {
                 log.error { "Failed to fetch person idents - response ${response.status.code}:${response.bodyString()}" }
-                return PersonIdentsResponse(objectName, 0, mutableMapOf())
+                return PersonIdentsResponse(objectName, 0, mapOf())
             }
         }
 
