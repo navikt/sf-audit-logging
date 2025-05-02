@@ -16,27 +16,27 @@ class AuditLogHandlerTest {
 
     private val salesforceClient: SalesforceClient = mockk<SalesforceClient>()
     private val classUnderTest = AuditLogHandler(salesforceClient)
-    private val uriEvents = mutableListOf(
-        UriEvent(
-            eventDateString = "2023-10-01T12:00:00.000+0000",
-            entity = "Account",
-            recordId = "001ABC123",
-            operation = "INSERT",
-            username = "user1",
-            userType = "Standard"
-        ),
-        UriEvent(
-            eventDateString = "2023-10-02T12:00:00.000+0000",
-            entity = "Account",
-            recordId = "101ABXX24",
-            operation = "INSERT",
-            username = "user1",
-            userType = "Standard"
-        )
-    )
 
     @Test
     fun `Should store two uri logs for account in Metrics`() {
+        val uriEvents = mutableListOf(
+            UriEvent(
+                eventDateString = "2023-10-01T12:00:00.000+0000",
+                entity = "Account",
+                recordId = "001ABC123",
+                operation = "INSERT",
+                username = "user1",
+                userType = "Standard"
+            ),
+            UriEvent(
+                eventDateString = "2023-10-02T12:00:00.000+0000",
+                entity = "Account",
+                recordId = "101ABXX24",
+                operation = "INSERT",
+                username = "user1",
+                userType = "Standard"
+            )
+        )
         mockkObject(Metrics)
 
         val mockCounterChild = mockk<Counter.Child>(relaxed = true)
@@ -60,6 +60,24 @@ class AuditLogHandlerTest {
 
     @Test
     fun `Should store one uri log for account in Metrics when only one has a person ident`() {
+        val uriEvents = mutableListOf(
+            UriEvent(
+                eventDateString = "2023-10-01T12:00:00.000+0000",
+                entity = "Account",
+                recordId = "001ABC123",
+                operation = "INSERT",
+                username = "user1",
+                userType = "Standard"
+            ),
+            UriEvent(
+                eventDateString = "2023-10-02T12:00:00.000+0000",
+                entity = "Account",
+                recordId = "101ABXX24",
+                operation = "INSERT",
+                username = "user1",
+                userType = "Standard"
+            )
+        )
         mockkObject(Metrics)
 
         val mockCounterChild = mockk<Counter.Child>(relaxed = true)

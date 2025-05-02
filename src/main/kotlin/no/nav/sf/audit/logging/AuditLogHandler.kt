@@ -17,13 +17,10 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSa
 
     val fetchAndTransfer: HttpHandler = {
         Metrics.clearUriEventsCounter()
-        val uriEvents = salesforceClient.fetchUriEvents()
-        val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(uriEvents)
+        val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents())
         var totalNumberOfLoggedRecords = 0
 
-        val groupedUriEvents = filteredUriEvents.groupBy { it.entity }
-        for ((entity, events) in groupedUriEvents) {
-
+        filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
             val personIdentsResponse = salesforceClient.fetchPersonIdents(
                 objectName = entity,
                 personIdentSelectClause = objectFilter.objectsToBeLogged.getProperty(entity),
@@ -33,20 +30,19 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSa
             totalNumberOfLoggedRecords += uriEventsWithPersonIdent.size
             Metrics.uriEvents.labels(entity).inc(uriEventsWithPersonIdent.size.toDouble())
         }
+
         Response(OK).body(Body(totalNumberOfLoggedRecords.toString()))
     }
 
-    private fun setUriEventsWithAndWithoutPersonIdent(events: List<UriEvent>, personIdentsResponse: PersonIdentsResponse ) {
-        for( event in events) {
+    private fun setUriEventsWithAndWithoutPersonIdent(events: List<UriEvent>, personIdentsResponse: PersonIdentsResponse) {
+        events.forEach { event ->
             val personIdent = personIdentsResponse.personIdentByRecordId[event.recordId]
             if (personIdent != null) {
                 event.personIdent = personIdent
                 uriEventsWithPersonIdent.add(event)
-            }
-            else{
+            } else {
                 uriEventsWithoutPersonIdent.add(event)
             }
         }
-        return
     }
 }
