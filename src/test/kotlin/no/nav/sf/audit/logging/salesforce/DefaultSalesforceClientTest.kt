@@ -57,4 +57,20 @@ class DefaultSalesforceClientTest {
         assertEquals("14097018384", result.personIdentByRecordId["0015t00000HvTteAAF"])
         assertEquals(1, result.numberOfRequests)
     }
+
+    @Test
+    fun `should perform 12 requests to Salesforce when there are 22100 record IDs`() {
+        val recordIds = mutableListOf<String>()
+        for (i in 1..22100) {
+            recordIds.add("0015t00000HvTteAAF$i")
+        }
+        val mockResponseBody = "{\"totalSize\":2,\"done\":true,\"records\":[{\"attributes\":{\"type\":\"Account\",\"url\":\"/services/data/v62.0/sobjects/Account/0015t00000HvTteAAF\"},\"Id\":\"0015t00000HvTteAAF\",\"INT_PersonIdent__c\":\"14097018384\"}]}"
+
+        val mockResponse = Response(Status.OK).body(mockResponseBody)
+        every { client(any()) } returns mockResponse
+
+        val result = classUnderTest.fetchPersonIdents("Account", "INT_PersonIdent__c", recordIds)
+
+        assertEquals(12, result.numberOfRequests)
+    }
 }

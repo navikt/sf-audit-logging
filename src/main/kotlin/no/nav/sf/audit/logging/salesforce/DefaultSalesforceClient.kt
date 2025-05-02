@@ -72,33 +72,40 @@ class DefaultSalesforceClient(
         personIdentSelectClause: String,
         recordIds: MutableList<String>
     ): PersonIdentsResponse {
-        val soqlQuery = "SELECT Id, $personIdentSelectClause FROM $objectName WHERE Id IN (${recordIds.distinct().joinToString(",")})"
-        val encodedQuery = URLEncoder.encode(soqlQuery, "UTF-8")
 
-        var recordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
-
+        val distinctRecordIds = recordIds.distinct()
         var personIdentByRecordId = mutableMapOf<String, String>()
         var numberOfRequests = 0
+        var numberOfRecords = 0
 
-        val request = org.http4k.core.Request(Method.GET, accessTokenHandler.instanceUrl + recordsUrl)
-            .header("Authorization", "Bearer ${accessTokenHandler.accessToken}")
-            .header("Accept", "application/json")
-        val response = client(request)
-        if (response.status.successful) {
-            val obj = JsonParser.parseString(response.bodyString()).asJsonObject
-            val recordEntries = obj["records"].asJsonArray
-            recordEntries.forEach {
-                val recordId = it.asJsonObject["Id"].asString
-                val personIdent = it.asJsonObject["INT_PersonIdent__c"].takeIf { !it.isJsonNull }?.asString ?: ""
-                if (personIdent.isNotEmpty()) {
-                    personIdentByRecordId[recordId] = personIdent
+        //fetch person idents in batches of 2000
+        while (numberOfRecords < distinctRecordIds.size) {
+            val currentRecordIdRange = distinctRecordIds.subList(numberOfRecords, minOf(numberOfRecords + 2000, distinctRecordIds.size))
+            numberOfRecords += currentRecordIdRange.size
+            val soqlQuery = "SELECT Id, $personIdentSelectClause FROM $objectName WHERE Id IN (${currentRecordIdRange.joinToString(",")})"
+            val encodedQuery = URLEncoder.encode(soqlQuery, "UTF-8")
+            var recordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
+
+            val request = org.http4k.core.Request(Method.GET, accessTokenHandler.instanceUrl + recordsUrl)
+                .header("Authorization", "Bearer ${accessTokenHandler.accessToken}")
+                .header("Accept", "application/json")
+            val response = client(request)
+            if (response.status.successful) {
+                val obj = JsonParser.parseString(response.bodyString()).asJsonObject
+                val recordEntries = obj["records"].asJsonArray
+                recordEntries.forEach {
+                    val recordId = it.asJsonObject["Id"].asString
+                    val personIdent = it.asJsonObject["INT_PersonIdent__c"].takeIf { !it.isJsonNull }?.asString ?: ""
+                    if (personIdent.isNotEmpty()) {
+                        personIdentByRecordId[recordId] = personIdent
+                    }
                 }
-            }
 
-            numberOfRequests++
-        } else {
-            log.error { "Failed to fetch person idents - response ${response.status.code}:${response.bodyString()}" }
-            return PersonIdentsResponse(objectName, 0, mutableMapOf())
+                numberOfRequests++
+            } else {
+                log.error { "Failed to fetch person idents - response ${response.status.code}:${response.bodyString()}" }
+                return PersonIdentsResponse(objectName, 0, mutableMapOf())
+            }
         }
 
         return PersonIdentsResponse(objectName, numberOfRequests, personIdentByRecordId)
