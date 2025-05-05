@@ -13,7 +13,7 @@ import org.http4k.core.Status.Companion.OK
 class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSalesforceClient()) {
     private val objectFilter = ObjectFilter()
     private val uriEventsWithPersonIdent: MutableList<UriEvent> = mutableListOf()
-    private val uriEventsWithoutPersonIdent: MutableList<UriEvent> = mutableListOf()
+    private val uriEventsWithoutAnyPersonIdents: MutableList<UriEvent> = mutableListOf()
 
     val fetchAndTransfer: HttpHandler = {
         Metrics.clearUriEventsCounter()
@@ -28,7 +28,12 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSa
             )
             setUriEventsWithAndWithoutPersonIdent(events, personIdentsResponse)
             totalNumberOfLoggedRecords += uriEventsWithPersonIdent.size
-            Metrics.uriEvents.labels(entity).inc(uriEventsWithPersonIdent.size.toDouble())
+            if (uriEventsWithPersonIdent.isNotEmpty()) {
+                Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsWithPersonIdent.size.toDouble())
+            }
+            if (uriEventsWithoutAnyPersonIdents.isNotEmpty()) {
+                Metrics.uriEventsWithoutAnyPersonIdents.labels(entity).inc(uriEventsWithoutAnyPersonIdents.size.toDouble())
+            }
         }
 
         Response(OK).body(Body(totalNumberOfLoggedRecords.toString()))
@@ -41,7 +46,7 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSa
                 event.personIdent = personIdent
                 uriEventsWithPersonIdent.add(event)
             } else {
-                uriEventsWithoutPersonIdent.add(event)
+                uriEventsWithoutAnyPersonIdents.add(event)
             }
         }
     }

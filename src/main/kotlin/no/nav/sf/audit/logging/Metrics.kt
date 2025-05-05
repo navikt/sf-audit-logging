@@ -13,13 +13,15 @@ import java.io.StringWriter
 object Metrics {
     private val log = KotlinLogging.logger { }
 
-    val uriEvents = registerLabelCounter("uri_events", "object")
+    val uriEventsWithPersonIdent = registerLabelCounter("uri_events", "object")
+    val uriEventsWithoutAnyPersonIdents = registerLabelCounter("uri_events_without_person_ident", "object")
 
     fun registerLabelCounter(name: String, vararg labels: String) =
         Counter.build().name(name).help(name).labelNames(*labels).register()
 
     fun clearUriEventsCounter() {
-        uriEvents.clear()
+        uriEventsWithPersonIdent.clear()
+        uriEventsWithoutAnyPersonIdents.clear()
     }
 
     init {
