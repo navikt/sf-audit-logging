@@ -74,7 +74,7 @@ class DefaultSalesforceClient(
     ): PersonIdentsResponse {
         val distinctRecordIds = recordIds.distinct()
         val personIdentByRecordId = mutableMapOf<String, String>()
-        var numberOfRequests = 0
+        var numberOfApiCalls = 0
 
         distinctRecordIds.chunked(2000).forEach { currentRecordIdRange ->
             val soqlQuery = "SELECT Id, $personIdentSelectClause FROM $objectName WHERE Id IN (${currentRecordIdRange.joinToString(",")})"
@@ -97,13 +97,13 @@ class DefaultSalesforceClient(
                         personIdentByRecordId[recordId] = personIdent
                     }
                 }
-                numberOfRequests++
+                numberOfApiCalls++
             } else {
                 log.error { "Failed to fetch person idents - response ${response.status.code}:${response.bodyString()}" }
                 return PersonIdentsResponse(objectName, 0, mapOf())
             }
         }
 
-        return PersonIdentsResponse(objectName, numberOfRequests, personIdentByRecordId)
+        return PersonIdentsResponse(objectName, numberOfApiCalls, personIdentByRecordId)
     }
 }

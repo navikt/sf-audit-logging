@@ -55,7 +55,7 @@ class DefaultSalesforceClientTest {
 
         assertEquals(1, result.personIdentByRecordId.size)
         assertEquals("14097018384", result.personIdentByRecordId["0015t00000HvTteAAF"])
-        assertEquals(1, result.numberOfRequests)
+        assertEquals(1, result.numberOfApiCalls)
     }
 
     @Test
@@ -71,6 +71,6 @@ class DefaultSalesforceClientTest {
 
         val result = classUnderTest.fetchPersonIdents("Account", "INT_PersonIdent__c", recordIds)
 
-        assertEquals(12, result.numberOfRequests)
+        assertEquals(12, result.numberOfApiCalls)
     }
 }

@@ -1,5 +1,6 @@
 package no.nav.sf.audit.logging
 
+import no.nav.sf.audit.logging.Metrics.numberOfApiCalls
 import no.nav.sf.audit.logging.salesforce.DefaultSalesforceClient
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
@@ -19,6 +20,7 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSa
         Metrics.clearUriEventsCounter()
         val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents())
         var totalNumberOfLoggedRecords = 0
+        var totalNumberOfApiCalls = 0
 
         filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
             val personIdentsResponse = salesforceClient.fetchPersonIdents(
@@ -26,8 +28,10 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSa
                 personIdentSelectClause = objectFilter.objectsToBeLogged.getProperty(entity),
                 recordIds = events.map { it.recordId }
             )
+            totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls
             setUriEventsWithAndWithoutPersonIdent(events, personIdentsResponse)
             totalNumberOfLoggedRecords += uriEventsWithPersonIdent.size
+
             if (uriEventsWithPersonIdent.isNotEmpty()) {
                 Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsWithPersonIdent.size.toDouble())
             }
@@ -35,7 +39,7 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSa
                 Metrics.uriEventsWithoutAnyPersonIdents.labels(entity).inc(uriEventsWithoutAnyPersonIdents.size.toDouble())
             }
         }
-
+        Metrics.numberOfApiCalls.labels("RequestPersonIdents").inc(totalNumberOfApiCalls.toDouble())
         Response(OK).body(Body(totalNumberOfLoggedRecords.toString()))
     }
 

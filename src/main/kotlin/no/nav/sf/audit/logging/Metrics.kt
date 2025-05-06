@@ -15,6 +15,7 @@ object Metrics {
 
     val uriEventsWithPersonIdent = registerLabelCounter("uri_events", "object")
     val uriEventsWithoutAnyPersonIdents = registerLabelCounter("uri_events_without_person_ident", "object")
+    val numberOfApiCalls = registerLabelCounter("api_calls", "Salesforce")
 
     fun registerLabelCounter(name: String, vararg labels: String) =
         Counter.build().name(name).help(name).labelNames(*labels).register()
@@ -22,6 +23,7 @@ object Metrics {
     fun clearUriEventsCounter() {
         uriEventsWithPersonIdent.clear()
         uriEventsWithoutAnyPersonIdents.clear()
+        numberOfApiCalls.clear()
     }
 
     init {
