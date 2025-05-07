@@ -30,7 +30,7 @@ private fun getUNIXTimestamp(date: String?): String {
 }
 
 private fun createExtension(uriEvent: UriEvent): String {
-    val end = "end=" + getUNIXTimestamp(uriEvent.eventDateString)
+    val end = "end=" + getUNIXTimestamp(uriEvent.eventDate)
     val suid = "suid=" + uriEvent.username
     val flexString1 = "flexString1=" + uriEvent.entity
     val flexString1Label = "flexString1Label=" + uriEvent.entity

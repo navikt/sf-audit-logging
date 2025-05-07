@@ -21,20 +21,18 @@ class AuditLogHandlerTest {
     fun `Should store two uri logs for account in Metrics`() {
         val uriEvents = mutableListOf(
             UriEvent(
-                eventDateString = "2023-10-01T12:00:00.000+0000",
+                eventDate = "2023-10-01T12:00:00.000+0000",
                 entity = "Account",
                 recordId = "001ABC123",
                 operation = "INSERT",
-                username = "user1",
-                userType = "Standard"
+                username = "user1"
             ),
             UriEvent(
-                eventDateString = "2023-10-02T12:00:00.000+0000",
+                eventDate = "2023-10-02T12:00:00.000+0000",
                 entity = "Account",
                 recordId = "101ABXX24",
                 operation = "INSERT",
-                username = "user1",
-                userType = "Standard"
+                username = "user1"
             )
         )
         mockkObject(Metrics)
@@ -62,20 +60,18 @@ class AuditLogHandlerTest {
     fun `Should store one uri log for account in Metrics when only one has a person ident`() {
         val uriEvents = mutableListOf(
             UriEvent(
-                eventDateString = "2023-10-01T12:00:00.000+0000",
+                eventDate = "2023-10-01T12:00:00.000+0000",
                 entity = "Account",
                 recordId = "001ABC123",
                 operation = "INSERT",
-                username = "user1",
-                userType = "Standard"
+                username = "user1"
             ),
             UriEvent(
-                eventDateString = "2023-10-02T12:00:00.000+0000",
+                eventDate = "2023-10-02T12:00:00.000+0000",
                 entity = "Account",
                 recordId = "101ABXX24",
                 operation = "INSERT",
-                username = "user1",
-                userType = "Standard"
+                username = "user1"
             )
         )
         mockkObject(Metrics)
@@ -102,20 +98,18 @@ class AuditLogHandlerTest {
     fun `Should log both events when the events have same record ID`() {
         val uriEventsWithSameRecordId = mutableListOf(
             UriEvent(
-                eventDateString = "2023-10-01T12:00:00.000+0000",
+                eventDate = "2023-10-01T12:00:00.000+0000",
                 entity = "Account",
                 recordId = "001ABC123",
                 operation = "INSERT",
-                username = "user1",
-                userType = "Standard"
+                username = "user1"
             ),
             UriEvent(
-                eventDateString = "2023-10-02T11:00:00.000+0000",
+                eventDate = "2023-10-02T11:00:00.000+0000",
                 entity = "Account",
                 recordId = "001ABC123",
                 operation = "INSERT",
-                username = "user1",
-                userType = "Standard"
+                username = "user1"
             )
         )
         mockkObject(Metrics)
@@ -142,12 +136,11 @@ class AuditLogHandlerTest {
     fun `Should log metric for uri events without any person ident`() {
         val uriEvents = mutableListOf(
             UriEvent(
-                eventDateString = "2023-10-01T12:00:00.000+0000",
+                eventDate = "2023-10-01T12:00:00.000+0000",
                 entity = "Account",
                 recordId = "001ABC1266",
                 operation = "INSERT",
-                username = "user1",
-                userType = "Standard"
+                username = "user1"
             ),
         )
         mockkObject(Metrics)

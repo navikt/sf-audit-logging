@@ -8,12 +8,11 @@ class ArcsightModelTest {
     @Test
     fun `Should transform uri event to Arcsight - eventdate will be UTC millis`() {
         val uriEvent = UriEvent(
-            eventDateString = "2023-06-14T10:30:00.000+0000",
+            eventDate = "2023-06-14T10:30:00.000+0000",
             entity = "Account",
             recordId = "a98893bc7",
             operation = "CREATE",
-            username = "john.doe",
-            userType = "User",
+            username = "john.doe"
         )
         uriEvent.personIdent = "123456789"
 

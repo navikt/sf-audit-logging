@@ -24,20 +24,18 @@ class ObjectFilterTest {
     fun `Should filter out uri event with entity not listed in objects yaml`() {
         val uriEvents = listOf(
             UriEvent(
-                eventDateString = "2023-10-01T12:00:00.000+0000",
+                eventDate = "2023-10-01T12:00:00.000+0000",
                 entity = "Account",
                 recordId = "001ABC123",
                 operation = "INSERT",
-                username = "user1",
-                userType = "Standard"
+                username = "user1"
             ),
             UriEvent(
-                eventDateString = "2023-10-02T15:30:00.000+0000",
+                eventDate = "2023-10-02T15:30:00.000+0000",
                 entity = "TestObject",
                 recordId = "500XYZ456",
                 operation = "UPDATE",
-                username = "user2",
-                userType = "Standard"
+                username = "user2"
             )
         )
 

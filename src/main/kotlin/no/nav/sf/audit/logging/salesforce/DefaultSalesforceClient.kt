@@ -46,8 +46,7 @@ class DefaultSalesforceClient(
                                 it.asJsonObject["QueriedEntities"].asString,
                                 it.asJsonObject["RecordId"].asString,
                                 it.asJsonObject["Operation"].asString,
-                                it.asJsonObject["Username"].asString,
-                                it.asJsonObject["UserType"].asString
+                                it.asJsonObject["Username"].asString
                             )
                         }
                     )
