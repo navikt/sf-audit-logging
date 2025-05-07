@@ -4,26 +4,26 @@ import no.nav.sf.audit.logging.salesforce.UriEvent
 import java.time.Instant
 
 fun createLogMessage(record: UriEvent): String {
-        val version = "CEF:0"
-        val deviceVendor = "salesforce"
-        val deviceProduct = "audit_logs"
-        val deviceVersion = "1.0"
-        val signatureID = "audit:accessed"
-        val name = "AuditLogs"
-        val severity = "INFO"
-        val extension = createExtension(record)
+    val version = "CEF:0"
+    val deviceVendor = "salesforce"
+    val deviceProduct = "audit_logs"
+    val deviceVersion = "1.0"
+    val signatureID = "audit:accessed"
+    val name = "AuditLogs"
+    val severity = "INFO"
+    val extension = createExtension(record)
 
-        return listOf(
-            version,
-            deviceVendor,
-            deviceProduct,
-            deviceVersion,
-            signatureID,
-            name,
-            severity,
-            extension
-        ).joinToString(separator = "|")
-    }
+    return listOf(
+        version,
+        deviceVendor,
+        deviceProduct,
+        deviceVersion,
+        signatureID,
+        name,
+        severity,
+        extension
+    ).joinToString(separator = "|")
+}
 
 private fun getUNIXTimestamp(date: String?): String {
     return date?.let { Instant.parse(it.substring(0, 22) + "Z").toEpochMilli().toString() } ?: ""
@@ -45,4 +45,4 @@ private fun createExtension(uriEvent: UriEvent): String {
         act,
         duid
     ).joinToString(separator = " ")
-    }
+}
