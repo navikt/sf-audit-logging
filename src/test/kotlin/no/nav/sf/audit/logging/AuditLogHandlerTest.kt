@@ -171,7 +171,7 @@ class AuditLogHandlerTest {
         val result: Response = classUnderTest.fetchAndTransfer(org.http4k.core.Request(org.http4k.core.Method.GET, "/"))
         assertEquals(0, result.bodyString().toInt())
 
-        // verify(exactly = 1) { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") }
-        // verify{ mockCounterChild.inc(1.0) }
+        verify(exactly = 1) { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") }
+        verify { mockCounterChild.inc(1.0) }
     }
 }
