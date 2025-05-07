@@ -78,7 +78,7 @@ class DefaultSalesforceClient(
 
         distinctRecordIds.chunked(2000).forEach { currentRecordIdRange ->
             val soqlQuery = "SELECT Id, $personIdentSelectClause FROM $objectName WHERE Id IN (${currentRecordIdRange.joinToString(",")})"
-            log.info() { "SOQL query: $soqlQuery" } 
+            log.info() { "SOQL query: $soqlQuery" }
             val encodedQuery = URLEncoder.encode(soqlQuery, "UTF-8")
             val recordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
 
