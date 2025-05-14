@@ -50,7 +50,7 @@ class AuditLogHandlerTest {
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
         val result: Response = classUnderTest.fetchAndTransfer(org.http4k.core.Request(org.http4k.core.Method.GET, "/"))
-        assertEquals(uriEvents.size, result.bodyString().toInt())
+        assertEquals(uriEvents.size.toDouble(), result.bodyString().toDouble())
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
         verify(exactly = 1) { mockCounterChild.inc(uriEvents.size.toDouble()) }
@@ -88,7 +88,7 @@ class AuditLogHandlerTest {
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
         val result: Response = classUnderTest.fetchAndTransfer(org.http4k.core.Request(org.http4k.core.Method.GET, "/"))
-        assertEquals(1, result.bodyString().toInt())
+        assertEquals(1.0, result.bodyString().toDouble())
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
         verify(exactly = 1) { mockCounterChild.inc(1.0) }
@@ -126,7 +126,7 @@ class AuditLogHandlerTest {
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
         val result: Response = classUnderTest.fetchAndTransfer(org.http4k.core.Request(org.http4k.core.Method.GET, "/"))
-        assertEquals(2, result.bodyString().toInt())
+        assertEquals(2.0, result.bodyString().toDouble())
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
         verify(exactly = 1) { mockCounterChild.inc(2.0) }
@@ -162,7 +162,7 @@ class AuditLogHandlerTest {
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
         val result: Response = classUnderTest.fetchAndTransfer(org.http4k.core.Request(org.http4k.core.Method.GET, "/"))
-        assertEquals(0, result.bodyString().toInt())
+        assertEquals(0.0, result.bodyString().toDouble())
 
         verify(exactly = 1) { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") }
         verify { mockCounterChild.inc(1.0) }

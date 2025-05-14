@@ -13,13 +13,11 @@ import org.http4k.core.Status.Companion.OK
 
 class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSalesforceClient()) {
     private val objectFilter = ObjectFilter()
-    private val uriEventsWithPersonIdent: MutableList<UriEvent> = mutableListOf()
-    private val uriEventsWithoutAnyPersonIdents: MutableList<UriEvent> = mutableListOf()
 
     val fetchAndTransfer: HttpHandler = {
         Metrics.clearUriEventsCounter()
         val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents())
-        var totalNumberOfLoggedRecords = 0
+        var totalNumberOfLoggedRecords = 0.0
         var totalNumberOfApiCalls = 0
 
         filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
@@ -29,29 +27,32 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSa
                 recordIds = events.map { it.recordId }
             )
             totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls
-            setUriEventsWithAndWithoutPersonIdent(events, personIdentsResponse)
-            totalNumberOfLoggedRecords += uriEventsWithPersonIdent.size
+            val (uriEventsWithPersonIdent, uriEventsWithoutAnyPersonIdents) = setUriEventsWithAndWithoutPersonIdent(events, personIdentsResponse)
+            totalNumberOfLoggedRecords += uriEventsWithPersonIdent
 
-            if (uriEventsWithPersonIdent.isNotEmpty()) {
-                Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsWithPersonIdent.size.toDouble())
+            if (uriEventsWithPersonIdent> 0) {
+                Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsWithPersonIdent)
             }
-            if (uriEventsWithoutAnyPersonIdents.isNotEmpty()) {
-                Metrics.uriEventsWithoutAnyPersonIdents.labels(entity).inc(uriEventsWithoutAnyPersonIdents.size.toDouble())
+            if (uriEventsWithoutAnyPersonIdents> 0) {
+                Metrics.uriEventsWithoutAnyPersonIdents.labels(entity).inc(uriEventsWithoutAnyPersonIdents)
             }
         }
         Metrics.numberOfApiCalls.labels("RequestPersonIdents").inc(totalNumberOfApiCalls.toDouble())
         Response(OK).body(Body(totalNumberOfLoggedRecords.toString()))
     }
 
-    private fun setUriEventsWithAndWithoutPersonIdent(events: List<UriEvent>, personIdentsResponse: PersonIdentsResponse) {
+    private fun setUriEventsWithAndWithoutPersonIdent(events: List<UriEvent>, personIdentsResponse: PersonIdentsResponse): Pair<Double, Double> {
+        var uriEventsWithPersonIdent = 0.0
+        var uriEventsWithoutAnyPersonIdents = 0.0
         events.forEach { event ->
             val personIdent = personIdentsResponse.personIdentByRecordId[event.recordId]
             if (personIdent != null) {
                 event.personIdent = personIdent
-                uriEventsWithPersonIdent.add(event)
+                uriEventsWithPersonIdent += 1.0
             } else {
-                uriEventsWithoutAnyPersonIdents.add(event)
+                uriEventsWithoutAnyPersonIdents += 1.0
             }
         }
+        return Pair(uriEventsWithPersonIdent, uriEventsWithoutAnyPersonIdents)
     }
 }
