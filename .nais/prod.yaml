@@ -28,6 +28,12 @@ spec:
     requests:
       cpu: 10m
       memory: 32Mi
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_16
+        tier: db-f1-micro
+        databases:
+          - name: sf-audit-logging-prod
   ingresses:
     - "https://sf-audit-logging.intern.nav.no"
   accessPolicy:
@@ -39,5 +45,7 @@ spec:
       value: "v62.0"
     - name: SF_TOKENHOST
       value: "https://login.salesforce.com/services/oauth2/token"
+    - name: CONTEXT
+      value: "PROD"
   envFrom:
     - secret: sf-audit-logging
