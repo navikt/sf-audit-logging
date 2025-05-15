@@ -1,14 +1,12 @@
 package no.nav.sf.audit.logging.db
 
-import java.time.LocalDate
+import no.nav.sf.audit.logging.Application
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.date
+import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.collections.groupBy
-import com.google.gson.Gson
-import no.nav.sf.audit.logging.Application
-import kotlin.collections.sortedByDescending
 
 data class AuditLogStatus(
     val syncDate: LocalDate,
@@ -17,7 +15,7 @@ data class AuditLogStatus(
 )
 
 object AuditLogStatusTable : Table("audit_log_status") {
-    val syncDate =date("sync_date")
+    val syncDate = date("sync_date")
     val numberOfRecords = integer("number_of_records")
     val success = bool("success")
 
@@ -32,7 +30,7 @@ fun ResultRow.toAuditLogStatus() = AuditLogStatus(
     success = this[AuditLogStatusTable.success]
 )
 fun getMetaData(): String {
-    val auditLogStatuses= retrieveAuditLogStatusesAsMapMock()
+    val auditLogStatuses = retrieveAuditLogStatusesAsMapMock()
     val now = LocalDateTime.now()
     val last30Days = now.minusDays(30).toLocalDate()
 
@@ -40,8 +38,8 @@ fun getMetaData(): String {
     return Application.gson.toJson(filteredAuditLogStatuses.toSortedMap(compareByDescending { it }))
 }
 
-fun retrieveAuditLogStatusesAsMapMock() : MutableMap<LocalDate, MutableMap<Boolean, Int>> {
-   val auditLogStatusesList=listOf(
+fun retrieveAuditLogStatusesAsMapMock(): MutableMap<LocalDate, MutableMap<Boolean, Int>> {
+    val auditLogStatusesList = listOf(
         AuditLogStatus(LocalDate.now(), 10, true),
         AuditLogStatus(LocalDate.now().minusDays(1), 5, false),
         AuditLogStatus(LocalDate.now().minusDays(2), 20, true),
@@ -54,6 +52,4 @@ fun retrieveAuditLogStatusesAsMapMock() : MutableMap<LocalDate, MutableMap<Boole
             }
             .toMutableMap()
     }.toMutableMap()
-
-
 }

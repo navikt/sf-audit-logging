@@ -13,7 +13,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-
 // Custom serializer/deserializer for LocalDate
 class LocalDateAdapter : JsonSerializer<LocalDate>, JsonDeserializer<LocalDate> {
     private val formatter = DateTimeFormatter.ISO_LOCAL_DATE
