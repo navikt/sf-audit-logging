@@ -31,7 +31,7 @@ fun ResultRow.toAuditLogStatus() = AuditLogStatus(
     success = this[AuditLogStatusTable.success]
 )
 fun getMetaData(): String {
-    val auditLogStatuses = if (local) retrieveAuditLogStatusesAsMapMock() else PostgresDatabase.auditLogSyncStatusMap
+    val auditLogStatuses = if (local) retrieveAuditLogStatusesAsMapMock() else PostgresDatabase.auditLogStatusMap
     val now = LocalDateTime.now()
     val last30Days = now.minusDays(30).toLocalDate()
 
