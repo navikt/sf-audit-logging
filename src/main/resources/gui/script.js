@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function renderMetadata(metadata) {
         metadataContainer.innerHTML = `
-        <table border="1" style="border-collapse: collapse; width: 100%;">
+        <table class="table-columns" border="1" style="border-collapse: collapse; margin: 0 auto;">
             <thead>
                 <tr>
                     <th>Log Date</th>
