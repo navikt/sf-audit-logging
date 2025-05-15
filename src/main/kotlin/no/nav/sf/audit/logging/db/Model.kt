@@ -42,6 +42,7 @@ fun retrieveAuditLogStatusesAsMapMock(): MutableMap<LocalDate, MutableMap<Boolea
     val auditLogStatusesList = listOf(
         AuditLogStatus(LocalDate.now(), 10, true),
         AuditLogStatus(LocalDate.now().minusDays(1), 5, false),
+        AuditLogStatus(LocalDate.now().minusDays(1), 45, true),
         AuditLogStatus(LocalDate.now().minusDays(2), 20, true),
     )
 

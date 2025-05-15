@@ -38,8 +38,6 @@ object Application {
     fun start() {
         log.info { "Starting in cluster $cluster" }
         apiServer(8080).start()
-        val filterClass = ObjectFilter()
-        log.info { "Objects to be logged: ${filterClass.objectsToBeLogged}" }
     }
 
     private val metaDataHandler: HttpHandler = {

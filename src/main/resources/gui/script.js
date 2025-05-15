@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
     fetch('/internal/guiLabel')
         .then(response => response.text()) // Resolve the text from the response
         .then(context => {
-            projectTitleElement.innerText = "Salesforce Event Log transfer " + context;
+            projectTitleElement.innerText = "Salesforce Audit Log transfer " + context;
         })
         .catch(error => {
             console.error("Error fetching context:", error);
