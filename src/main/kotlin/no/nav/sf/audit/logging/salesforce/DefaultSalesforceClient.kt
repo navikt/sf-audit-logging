@@ -92,7 +92,7 @@ class DefaultSalesforceClient(
                 recordEntries.forEach {
                     val recordId = it.asJsonObject["Id"].asString
                     val personIdent = it.asJsonObject["INT_PersonIdent__c"]
-                        ?.takeIf { it != null && !it.isJsonNull }?.asString.orEmpty()
+                        ?.takeIf { !it.isJsonNull }?.asString.orEmpty()
                     if (personIdent.isNotEmpty()) {
                         personIdentByRecordId[recordId] = personIdent
                     }
