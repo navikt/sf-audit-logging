@@ -2,7 +2,9 @@ package no.nav.sf.audit.logging.db
 
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.upsert
 import java.time.LocalDate
+import kotlin.collections.set
 
 object PostgresDatabase {
 
@@ -21,5 +23,17 @@ object PostgresDatabase {
                         .toMutableMap()
                 }.toMutableMap()
         }
+    }
+
+    fun upsertAuditLogStatus(syncDate: LocalDate, success: Boolean, numberOfRecords: Int): AuditLogStatus? {
+        return transaction {
+            AuditLogStatusTable.upsert(
+                keys = arrayOf(AuditLogStatusTable.syncDate, AuditLogStatusTable.success)
+            ) {
+                it[AuditLogStatusTable.syncDate] = syncDate
+                it[AuditLogStatusTable.success] = success
+                it[AuditLogStatusTable.numberOfRecords] = numberOfRecords
+            }
+        }.resultedValues?.firstOrNull()?.toAuditLogStatus()
     }
 }
