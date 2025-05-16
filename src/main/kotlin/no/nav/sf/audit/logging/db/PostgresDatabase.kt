@@ -6,4 +6,6 @@ interface PostgresDatabase {
     fun retrieveAuditLogStatusesAsMap(): MutableMap<LocalDate, MutableMap<Boolean, Int>>
 
     fun upsertAuditLogStatus(syncDate: LocalDate, success: Boolean, numberOfRecords: Int): AuditLogStatus?
+
+    fun fetchAuditLogStatus(syncDate: LocalDate, success: Boolean): List<AuditLogStatus>
 }

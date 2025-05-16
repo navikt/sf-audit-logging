@@ -5,6 +5,7 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.verify
 import io.prometheus.client.Counter
+import no.nav.sf.audit.logging.db.AuditLogStatus
 import no.nav.sf.audit.logging.db.PostgresDatabase
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
@@ -24,6 +25,7 @@ class AuditLogHandlerTest {
     fun setup() {
         mockkObject(Metrics)
         every { postgresDatabase.upsertAuditLogStatus(any(), any(), any()) }.returns(null)
+        every { postgresDatabase.fetchAuditLogStatus(any(), any()) }.returns(emptyList())
     }
 
     @Test
@@ -119,7 +121,7 @@ class AuditLogHandlerTest {
     }
 
     @Test
-    fun `Should create one audit store record as succeded in postgres`() {
+    fun `Should create one audit log record as succeded in postgres`() {
         val uriEvents = TestDataFactory.getUriEvents(2)
 
         val mockCounterChild = mockk<Counter.Child>(relaxed = true)
@@ -138,5 +140,36 @@ class AuditLogHandlerTest {
 
         classUnderTest.fetchAndTransfer(org.http4k.core.Request(org.http4k.core.Method.GET, "/"))
         verify(exactly = 1) { postgresDatabase.upsertAuditLogStatus(LocalDate.now(), true, 2) }
+    }
+
+    @Test
+    fun `Should not transfer any logs if a transfer has already run successfully on the same day`() {
+        val uriEvents = TestDataFactory.getUriEvents(2)
+
+        val mockCounterChild = mockk<Counter.Child>(relaxed = true)
+        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
+        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
+        every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
+
+        every { salesforceClient.fetchUriEvents() }.returns(uriEvents)
+        every { postgresDatabase.fetchAuditLogStatus(any(), any()) }.returns(
+            listOf(
+                AuditLogStatus(
+                    syncDate = LocalDate.now(),
+                    success = true,
+                    numberOfRecords = 1
+                )
+            )
+        )
+
+        val personIdentByRecordId = mapOf(
+            "1" to "12345678901",
+            "2" to "12345678902"
+        )
+        val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
+        every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
+
+        val result: Response = classUnderTest.fetchAndTransfer(org.http4k.core.Request(org.http4k.core.Method.GET, "/"))
+        assertEquals(0.0, result.bodyString().toDouble())
     }
 }

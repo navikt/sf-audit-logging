@@ -52,4 +52,8 @@ class DefaultPostgresDatabase : PostgresDatabase {
             }
         }.resultedValues?.firstOrNull()?.toAuditLogStatus()
     }
+
+    override fun fetchAuditLogStatus(syncDate: LocalDate, success: Boolean): List<AuditLogStatus> {
+        return emptyList()
+    }
 }

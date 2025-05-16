@@ -23,4 +23,10 @@ class MockPostgresDatabase : PostgresDatabase {
     override fun upsertAuditLogStatus(syncDate: LocalDate, success: Boolean, numberOfRecords: Int): AuditLogStatus? {
         return null
     }
+
+    override fun fetchAuditLogStatus(syncDate: LocalDate, success: Boolean): List<AuditLogStatus> {
+        return listOf(
+            AuditLogStatus(syncDate, 10, success)
+        )
+    }
 }

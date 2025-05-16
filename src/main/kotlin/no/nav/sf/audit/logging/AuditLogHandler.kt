@@ -15,11 +15,17 @@ import java.time.LocalDate
 class AuditLogHandler(private val salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase) {
     private val objectFilter = ObjectFilter()
 
-    val fetchAndTransfer: HttpHandler = {
-        Metrics.clearUriEventsCounter()
-        val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents())
+    val fetchAndTransfer: HttpHandler = fetchAndTransfer@{
         var totalNumberOfLoggedRecords = 0.0
         var totalNumberOfApiCalls = 0
+
+        val successfulTransferSameDay = postgresDatabase.fetchAuditLogStatus(LocalDate.now(), true)
+        if (successfulTransferSameDay.isNotEmpty()) {
+            //Stop if we have already transferred today
+            return@fetchAndTransfer Response(OK).body(Body(totalNumberOfLoggedRecords.toString()))
+        }
+        Metrics.clearUriEventsCounter()
+        val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents())
 
         filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
             val personIdentsResponse = salesforceClient.fetchPersonIdents(
