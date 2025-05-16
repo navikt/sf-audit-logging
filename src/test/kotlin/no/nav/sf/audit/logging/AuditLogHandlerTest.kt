@@ -5,17 +5,26 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.verify
 import io.prometheus.client.Counter
+import no.nav.sf.audit.logging.db.PostgresDatabase
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import no.nav.sf.audit.logging.salesforce.UriEvent
 import org.http4k.core.Response
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 
 class AuditLogHandlerTest {
 
     private val salesforceClient: SalesforceClient = mockk<SalesforceClient>()
-    private val classUnderTest = AuditLogHandler(salesforceClient)
+    private val postgresDatabase = mockk<PostgresDatabase>()
+    private val classUnderTest = AuditLogHandler(salesforceClient, postgresDatabase)
+
+    @BeforeEach
+    fun setup() {
+        every { postgresDatabase.upsertAuditLogStatus(any(), any(), any()) }.returns(null)
+    }
 
     @Test
     fun `Should store two uri logs for account in Metrics`() {
@@ -145,8 +154,6 @@ class AuditLogHandlerTest {
         )
         mockkObject(Metrics)
 
-        mockkObject(Metrics)
-
         val mockCounterChild = mockk<Counter.Child>(relaxed = true)
         every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
         every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
@@ -166,5 +173,43 @@ class AuditLogHandlerTest {
 
         verify(exactly = 1) { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") }
         verify { mockCounterChild.inc(1.0) }
+    }
+
+    @Test
+    fun `Should create one audit store record as succeded in postgres`() {
+        val uriEvents = mutableListOf(
+            UriEvent(
+                eventDate = "2023-10-01T12:00:00.000+0000",
+                entity = "Account",
+                recordId = "001ABC123",
+                operation = "INSERT",
+                username = "user1"
+            ),
+            UriEvent(
+                eventDate = "2023-10-02T12:00:00.000+0000",
+                entity = "Account",
+                recordId = "101ABXX24",
+                operation = "INSERT",
+                username = "user1"
+            )
+        )
+
+        mockkObject(Metrics)
+        val mockCounterChild = mockk<Counter.Child>(relaxed = true)
+        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
+        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
+        every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
+
+        every { salesforceClient.fetchUriEvents() }.returns(uriEvents)
+
+        val personIdentByRecordId = mapOf(
+            "001ABC123" to "12345678901",
+            "101ABXX24" to "12345678902"
+        )
+        val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
+        every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
+
+        classUnderTest.fetchAndTransfer(org.http4k.core.Request(org.http4k.core.Method.GET, "/"))
+        verify(exactly = 1) { postgresDatabase.upsertAuditLogStatus(LocalDate.now(), true, 2) }
     }
 }

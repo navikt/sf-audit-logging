@@ -1,7 +1,7 @@
 package no.nav.sf.audit.logging
 
 import no.nav.sf.audit.logging.Metrics.numberOfApiCalls
-import no.nav.sf.audit.logging.salesforce.DefaultSalesforceClient
+import no.nav.sf.audit.logging.db.PostgresDatabase
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import no.nav.sf.audit.logging.salesforce.UriEvent
@@ -10,8 +10,9 @@ import org.http4k.core.HttpHandler
 import org.http4k.core.Response
 import org.http4k.core.Response.Companion.invoke
 import org.http4k.core.Status.Companion.OK
+import java.time.LocalDate
 
-class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSalesforceClient()) {
+class AuditLogHandler(private val salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase) {
     private val objectFilter = ObjectFilter()
 
     val fetchAndTransfer: HttpHandler = {
@@ -37,6 +38,7 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSa
                 Metrics.uriEventsWithoutAnyPersonIdents.labels(entity).inc(uriEventsWithoutAnyPersonIdents)
             }
         }
+        postgresDatabase.upsertAuditLogStatus(LocalDate.now(), true, totalNumberOfLoggedRecords.toInt())
         Metrics.numberOfApiCalls.labels("RequestPersonIdents").inc(totalNumberOfApiCalls.toDouble())
         Response(OK).body(Body(totalNumberOfLoggedRecords.toString()))
     }

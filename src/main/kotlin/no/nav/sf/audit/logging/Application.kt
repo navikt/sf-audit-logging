@@ -1,7 +1,11 @@
 package no.nav.sf.audit.logging
 
 import mu.KotlinLogging
+import no.nav.sf.audit.logging.db.DefaultPostgresDatabase
+import no.nav.sf.audit.logging.db.MockPostgresDatabase
+import no.nav.sf.audit.logging.db.PostgresDatabase
 import no.nav.sf.audit.logging.db.getMetaData
+import no.nav.sf.audit.logging.salesforce.DefaultSalesforceClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Response
@@ -17,7 +21,8 @@ import org.http4k.server.asServer
 object Application {
     private val log = KotlinLogging.logger { }
     private val cluster = System.getenv(env_NAIS_CLUSTER_NAME) ?: "local"
-    private val auditLogHandler = AuditLogHandler()
+    private val postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()
+    private val auditLogHandler = AuditLogHandler(DefaultSalesforceClient(), postgresDatabase)
 
     val context = env(config_CONTEXT)
 
