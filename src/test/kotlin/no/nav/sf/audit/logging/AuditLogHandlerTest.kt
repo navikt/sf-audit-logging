@@ -8,7 +8,6 @@ import io.prometheus.client.Counter
 import no.nav.sf.audit.logging.db.PostgresDatabase
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
-import no.nav.sf.audit.logging.salesforce.UriEvent
 import org.http4k.core.Response
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -23,37 +22,21 @@ class AuditLogHandlerTest {
 
     @BeforeEach
     fun setup() {
+        mockkObject(Metrics)
         every { postgresDatabase.upsertAuditLogStatus(any(), any(), any()) }.returns(null)
     }
 
     @Test
     fun `Should store two uri logs for account in Metrics`() {
-        val uriEvents = mutableListOf(
-            UriEvent(
-                eventDate = "2023-10-01T12:00:00.000+0000",
-                entity = "Account",
-                recordId = "001ABC123",
-                operation = "INSERT",
-                username = "user1"
-            ),
-            UriEvent(
-                eventDate = "2023-10-02T12:00:00.000+0000",
-                entity = "Account",
-                recordId = "101ABXX24",
-                operation = "INSERT",
-                username = "user1"
-            )
-        )
-        mockkObject(Metrics)
-
         val mockCounterChild = mockk<Counter.Child>(relaxed = true)
         every { Metrics.uriEventsWithPersonIdent.labels("Account") } returns mockCounterChild
 
+        val uriEvents = TestDataFactory.getUriEvents(2)
         every { salesforceClient.fetchUriEvents() }.returns(uriEvents)
 
         val personIdentByRecordId = mapOf(
-            "001ABC123" to "12345678901",
-            "101ABXX24" to "12345678902"
+            "1" to "12345678901",
+            "2" to "12345678902"
         )
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
@@ -67,31 +50,15 @@ class AuditLogHandlerTest {
 
     @Test
     fun `Should store one uri log for account in Metrics when only one has a person ident`() {
-        val uriEvents = mutableListOf(
-            UriEvent(
-                eventDate = "2023-10-01T12:00:00.000+0000",
-                entity = "Account",
-                recordId = "001ABC123",
-                operation = "INSERT",
-                username = "user1"
-            ),
-            UriEvent(
-                eventDate = "2023-10-02T12:00:00.000+0000",
-                entity = "Account",
-                recordId = "101ABXX24",
-                operation = "INSERT",
-                username = "user1"
-            )
-        )
-        mockkObject(Metrics)
 
         val mockCounterChild = mockk<Counter.Child>(relaxed = true)
         every { Metrics.uriEventsWithPersonIdent.labels("Account") } returns mockCounterChild
 
+        val uriEvents = TestDataFactory.getUriEvents(2)
         every { salesforceClient.fetchUriEvents() }.returns(uriEvents)
 
         val personIdentByRecordId = mapOf(
-            "001ABC123" to "12345678901"
+            "1" to "12345678901"
         )
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
@@ -105,23 +72,8 @@ class AuditLogHandlerTest {
 
     @Test
     fun `Should log both events when the events have same record ID`() {
-        val uriEventsWithSameRecordId = mutableListOf(
-            UriEvent(
-                eventDate = "2023-10-01T12:00:00.000+0000",
-                entity = "Account",
-                recordId = "001ABC123",
-                operation = "INSERT",
-                username = "user1"
-            ),
-            UriEvent(
-                eventDate = "2023-10-02T11:00:00.000+0000",
-                entity = "Account",
-                recordId = "001ABC123",
-                operation = "INSERT",
-                username = "user1"
-            )
-        )
-        mockkObject(Metrics)
+        var uriEventsWithSameRecordId = TestDataFactory.getUriEvents(1)
+        uriEventsWithSameRecordId.add(TestDataFactory.getUriEvents(1).first())
 
         val mockCounterChild = mockk<Counter.Child>(relaxed = true)
         every { Metrics.uriEventsWithPersonIdent.labels("Account") } returns mockCounterChild
@@ -129,7 +81,7 @@ class AuditLogHandlerTest {
         every { salesforceClient.fetchUriEvents() }.returns(uriEventsWithSameRecordId)
 
         val personIdentByRecordId = mapOf(
-            "001ABC123" to "12345678901"
+            "1" to "12345678901"
         )
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
@@ -143,16 +95,7 @@ class AuditLogHandlerTest {
 
     @Test
     fun `Should log metric for uri events without any person ident`() {
-        val uriEvents = mutableListOf(
-            UriEvent(
-                eventDate = "2023-10-01T12:00:00.000+0000",
-                entity = "Account",
-                recordId = "001ABC1266",
-                operation = "INSERT",
-                username = "user1"
-            ),
-        )
-        mockkObject(Metrics)
+        val uriEvents = TestDataFactory.getUriEvents(1)
 
         val mockCounterChild = mockk<Counter.Child>(relaxed = true)
         every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
@@ -163,7 +106,7 @@ class AuditLogHandlerTest {
 
         // no matching person idents
         val personIdentByRecordId = mapOf(
-            "001ABC123" to "12345678901"
+            "99" to "12345678901"
         )
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
@@ -177,24 +120,8 @@ class AuditLogHandlerTest {
 
     @Test
     fun `Should create one audit store record as succeded in postgres`() {
-        val uriEvents = mutableListOf(
-            UriEvent(
-                eventDate = "2023-10-01T12:00:00.000+0000",
-                entity = "Account",
-                recordId = "001ABC123",
-                operation = "INSERT",
-                username = "user1"
-            ),
-            UriEvent(
-                eventDate = "2023-10-02T12:00:00.000+0000",
-                entity = "Account",
-                recordId = "101ABXX24",
-                operation = "INSERT",
-                username = "user1"
-            )
-        )
+        val uriEvents = TestDataFactory.getUriEvents(2)
 
-        mockkObject(Metrics)
         val mockCounterChild = mockk<Counter.Child>(relaxed = true)
         every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
         every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
@@ -203,8 +130,8 @@ class AuditLogHandlerTest {
         every { salesforceClient.fetchUriEvents() }.returns(uriEvents)
 
         val personIdentByRecordId = mapOf(
-            "001ABC123" to "12345678901",
-            "101ABXX24" to "12345678902"
+            "1" to "12345678901",
+            "2" to "12345678902"
         )
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
