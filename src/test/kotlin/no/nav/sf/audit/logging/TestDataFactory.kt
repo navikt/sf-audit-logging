@@ -10,7 +10,7 @@ object TestDataFactory {
         for (i in 1..numberOfRecords) {
             uriEvents.add(
                 UriEvent(
-                    eventDate = "2023-10-01T12:00:00Z",
+                    eventDate = "2023-06-14T10:30:00.000+0000",
                     username = "testuser$i",
                     entity = "Account",
                     operation = "CREATE",
