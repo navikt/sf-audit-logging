@@ -3,9 +3,9 @@ package no.nav.sf.audit.logging.db
 import java.time.LocalDate
 
 interface PostgresDatabase {
-    fun retrieveAuditLogStatusesAsMap(): MutableMap<LocalDate, List<AuditLogStatus>>
+    fun retrieveAuditLogSyncStatusesAsMap(): MutableMap<LocalDate, List<AuditLogSyncStatus>>
 
-    fun upsertAuditLogStatus(eventDate: LocalDate, syncDate: LocalDate, success: Boolean, numberOfRecords: Int): AuditLogStatus?
+    fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, success: Boolean, numberOfRecords: Int): AuditLogSyncStatus?
 
-    fun fetchAuditLogStatus(syncDate: LocalDate, success: Boolean): List<AuditLogStatus>
+    fun fetchAuditLogSyncStatus(syncDate: LocalDate, success: Boolean): List<AuditLogSyncStatus>
 }

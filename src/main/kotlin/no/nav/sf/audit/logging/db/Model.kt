@@ -8,14 +8,14 @@ import org.jetbrains.exposed.sql.javatime.date
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-data class AuditLogStatus(
+data class AuditLogSyncStatus(
     val eventDate: LocalDate,
     val syncDate: LocalDate,
     val numberOfRecords: Int,
     val success: Boolean
 )
 
-object AuditLogStatusTable : Table("audit_log_status") {
+object AuditLogSyncStatusTable : Table("audit_log_status") {
     val eventDate = date("log_date")
     val syncDate = date("sync_date")
     val numberOfRecords = integer("number_of_records")
@@ -28,17 +28,17 @@ object AuditLogStatusTable : Table("audit_log_status") {
 
 private val postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()
 
-fun ResultRow.toAuditLogStatus() = AuditLogStatus(
-    eventDate = this[AuditLogStatusTable.eventDate],
-    syncDate = this[AuditLogStatusTable.syncDate],
-    numberOfRecords = this[AuditLogStatusTable.numberOfRecords],
-    success = this[AuditLogStatusTable.success]
+fun ResultRow.toAuditLogSyncStatus() = AuditLogSyncStatus(
+    eventDate = this[AuditLogSyncStatusTable.eventDate],
+    syncDate = this[AuditLogSyncStatusTable.syncDate],
+    numberOfRecords = this[AuditLogSyncStatusTable.numberOfRecords],
+    success = this[AuditLogSyncStatusTable.success]
 )
 fun getMetaData(): String {
-    val auditLogStatuses = postgresDatabase.retrieveAuditLogStatusesAsMap()
+    val AuditLogSyncStatuses = postgresDatabase.retrieveAuditLogSyncStatusesAsMap()
     val now = LocalDateTime.now()
     val last30Days = now.minusDays(30).toLocalDate()
 
-    val filteredAuditLogStatuses = auditLogStatuses.filterKeys { it.isAfter(last30Days) }
-    return Application.gson.toJson(filteredAuditLogStatuses.toSortedMap(compareByDescending { it }))
+    val filteredAuditLogSyncStatuses = AuditLogSyncStatuses.filterKeys { it.isAfter(last30Days) }
+    return Application.gson.toJson(filteredAuditLogSyncStatuses.toSortedMap(compareByDescending { it }))
 }

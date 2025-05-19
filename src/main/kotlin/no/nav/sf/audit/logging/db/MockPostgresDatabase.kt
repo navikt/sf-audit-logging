@@ -3,26 +3,26 @@ package no.nav.sf.audit.logging.db
 import java.time.LocalDate
 
 class MockPostgresDatabase : PostgresDatabase {
-    override fun retrieveAuditLogStatusesAsMap(): MutableMap<LocalDate, List<AuditLogStatus>> {
-        val auditLogStatusesList = listOf(
-            AuditLogStatus(LocalDate.now().minusDays(1), LocalDate.now(), 10, true),
-            AuditLogStatus(LocalDate.now().minusDays(2), LocalDate.now().minusDays(1), 5, false),
-            AuditLogStatus(LocalDate.now().minusDays(2), LocalDate.now().minusDays(1), 45, true),
-            AuditLogStatus(LocalDate.now().minusDays(3), LocalDate.now().minusDays(2), 20, true),
+    override fun retrieveAuditLogSyncStatusesAsMap(): MutableMap<LocalDate, List<AuditLogSyncStatus>> {
+        val AuditLogSyncStatusesList = listOf(
+            AuditLogSyncStatus(LocalDate.now().minusDays(1), LocalDate.now(), 10, true),
+            AuditLogSyncStatus(LocalDate.now().minusDays(2), LocalDate.now().minusDays(1), 5, false),
+            AuditLogSyncStatus(LocalDate.now().minusDays(2), LocalDate.now().minusDays(1), 45, true),
+            AuditLogSyncStatus(LocalDate.now().minusDays(3), LocalDate.now().minusDays(2), 20, true),
         )
 
-        return auditLogStatusesList.groupBy { it.syncDate }
+        return AuditLogSyncStatusesList.groupBy { it.syncDate }
             .mapValues { entry -> entry.value }
             .toMutableMap()
     }
 
-    override fun upsertAuditLogStatus(eventDate: LocalDate, syncDate: LocalDate, success: Boolean, numberOfRecords: Int): AuditLogStatus? {
+    override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, success: Boolean, numberOfRecords: Int): AuditLogSyncStatus? {
         return null
     }
 
-    override fun fetchAuditLogStatus(syncDate: LocalDate, success: Boolean): List<AuditLogStatus> {
+    override fun fetchAuditLogSyncStatus(syncDate: LocalDate, success: Boolean): List<AuditLogSyncStatus> {
         return listOf(
-            AuditLogStatus(syncDate.minusDays(1), syncDate, 10, success)
+            AuditLogSyncStatus(syncDate.minusDays(1), syncDate, 10, success)
         )
     }
 }

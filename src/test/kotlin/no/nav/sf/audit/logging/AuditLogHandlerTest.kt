@@ -5,7 +5,7 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.verify
 import io.prometheus.client.Counter
-import no.nav.sf.audit.logging.db.AuditLogStatus
+import no.nav.sf.audit.logging.db.AuditLogSyncStatus
 import no.nav.sf.audit.logging.db.PostgresDatabase
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
@@ -24,8 +24,8 @@ class AuditLogHandlerTest {
     @BeforeEach
     fun setup() {
         mockkObject(Metrics)
-        every { postgresDatabase.upsertAuditLogStatus(any(), any(), any(), any()) }.returns(null)
-        every { postgresDatabase.fetchAuditLogStatus(any(), any()) }.returns(emptyList())
+        every { postgresDatabase.upsertAuditLogSyncStatus(any(), any(), any(), any()) }.returns(null)
+        every { postgresDatabase.fetchAuditLogSyncStatus(any(), any()) }.returns(emptyList())
     }
 
     @Test
@@ -139,7 +139,7 @@ class AuditLogHandlerTest {
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
         classUnderTest.fetchAndTransfer(org.http4k.core.Request(org.http4k.core.Method.GET, "/"))
-        verify(exactly = 1) { postgresDatabase.upsertAuditLogStatus(LocalDate.now().minusDays(1), LocalDate.now(), true, 2) }
+        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now().minusDays(1), LocalDate.now(), true, 2) }
     }
 
     @Test
@@ -152,9 +152,9 @@ class AuditLogHandlerTest {
         every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
 
         every { salesforceClient.fetchUriEvents() }.returns(uriEvents)
-        every { postgresDatabase.fetchAuditLogStatus(any(), any()) }.returns(
+        every { postgresDatabase.fetchAuditLogSyncStatus(any(), any()) }.returns(
             listOf(
-                AuditLogStatus(
+                AuditLogSyncStatus(
                     eventDate = LocalDate.now().minusDays(1),
                     syncDate = LocalDate.now(),
                     success = true,

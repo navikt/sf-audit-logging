@@ -28,29 +28,29 @@ class DefaultPostgresDatabase : PostgresDatabase {
         transactionIsolation = "TRANSACTION_REPEATABLE_READ" // Isolation level that ensure the same snapshot of db during one transaction
     }
 
-    override fun retrieveAuditLogStatusesAsMap(): MutableMap<LocalDate, List<AuditLogStatus>> {
+    override fun retrieveAuditLogSyncStatusesAsMap(): MutableMap<LocalDate, List<AuditLogSyncStatus>> {
         return transaction {
-            AuditLogStatusTable.selectAll()
-                .map { it.toAuditLogStatus() }
+            AuditLogSyncStatusTable.selectAll()
+                .map { it.toAuditLogSyncStatus() }
                 .groupBy { it.syncDate }
                 .toMutableMap()
         }
     }
 
-    override fun upsertAuditLogStatus(eventDate: LocalDate, syncDate: LocalDate, success: Boolean, numberOfRecords: Int): AuditLogStatus? {
+    override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, success: Boolean, numberOfRecords: Int): AuditLogSyncStatus? {
         return transaction {
-            AuditLogStatusTable.upsert(
-                keys = arrayOf(AuditLogStatusTable.syncDate, AuditLogStatusTable.success)
+            AuditLogSyncStatusTable.upsert(
+                keys = arrayOf(AuditLogSyncStatusTable.syncDate, AuditLogSyncStatusTable.success)
             ) {
-                it[AuditLogStatusTable.eventDate] = eventDate
-                it[AuditLogStatusTable.syncDate] = syncDate
-                it[AuditLogStatusTable.success] = success
-                it[AuditLogStatusTable.numberOfRecords] = numberOfRecords
+                it[AuditLogSyncStatusTable.eventDate] = eventDate
+                it[AuditLogSyncStatusTable.syncDate] = syncDate
+                it[AuditLogSyncStatusTable.success] = success
+                it[AuditLogSyncStatusTable.numberOfRecords] = numberOfRecords
             }
-        }.resultedValues?.firstOrNull()?.toAuditLogStatus()
+        }.resultedValues?.firstOrNull()?.toAuditLogSyncStatus()
     }
 
-    override fun fetchAuditLogStatus(syncDate: LocalDate, success: Boolean): List<AuditLogStatus> {
+    override fun fetchAuditLogSyncStatus(syncDate: LocalDate, success: Boolean): List<AuditLogSyncStatus> {
         return emptyList()
     }
 }
