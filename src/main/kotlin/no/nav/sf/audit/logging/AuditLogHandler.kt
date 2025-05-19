@@ -21,7 +21,7 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient, postgresDa
 
         val successfulTransferSameDay = postgresDatabase.fetchAuditLogStatus(LocalDate.now(), true)
         if (successfulTransferSameDay.isNotEmpty()) {
-            //Stop if we have already transferred today
+            // Stop if we have already transferred today
             return@fetchAndTransfer Response(OK).body(Body(totalNumberOfLoggedRecords.toString()))
         }
         Metrics.clearUriEventsCounter()
@@ -44,7 +44,7 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient, postgresDa
                 Metrics.uriEventsWithoutAnyPersonIdents.labels(entity).inc(uriEventsWithoutAnyPersonIdents)
             }
         }
-        postgresDatabase.upsertAuditLogStatus(LocalDate.now(), true, totalNumberOfLoggedRecords.toInt())
+        postgresDatabase.upsertAuditLogStatus(LocalDate.now().minusDays(1), LocalDate.now(), true, totalNumberOfLoggedRecords.toInt())
         Metrics.numberOfApiCalls.labels("RequestPersonIdents").inc(totalNumberOfApiCalls.toDouble())
         Response(OK).body(Body(totalNumberOfLoggedRecords.toString()))
     }

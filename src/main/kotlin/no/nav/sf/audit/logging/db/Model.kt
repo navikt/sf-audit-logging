@@ -9,24 +9,27 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 data class AuditLogStatus(
+    val eventDate: LocalDate,
     val syncDate: LocalDate,
     val numberOfRecords: Int,
     val success: Boolean
 )
 
 object AuditLogStatusTable : Table("audit_log_status") {
+    val eventDate = date("log_date")
     val syncDate = date("sync_date")
     val numberOfRecords = integer("number_of_records")
     val success = bool("success")
 
     init {
-        uniqueIndex(syncDate, success)
+        uniqueIndex(eventDate, success)
     }
 }
 
 private val postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()
 
 fun ResultRow.toAuditLogStatus() = AuditLogStatus(
+    eventDate = this[AuditLogStatusTable.eventDate],
     syncDate = this[AuditLogStatusTable.syncDate],
     numberOfRecords = this[AuditLogStatusTable.numberOfRecords],
     success = this[AuditLogStatusTable.success]

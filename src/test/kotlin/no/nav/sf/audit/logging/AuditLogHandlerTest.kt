@@ -24,7 +24,7 @@ class AuditLogHandlerTest {
     @BeforeEach
     fun setup() {
         mockkObject(Metrics)
-        every { postgresDatabase.upsertAuditLogStatus(any(), any(), any()) }.returns(null)
+        every { postgresDatabase.upsertAuditLogStatus(any(), any(), any(), any()) }.returns(null)
         every { postgresDatabase.fetchAuditLogStatus(any(), any()) }.returns(emptyList())
     }
 
@@ -139,7 +139,7 @@ class AuditLogHandlerTest {
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
         classUnderTest.fetchAndTransfer(org.http4k.core.Request(org.http4k.core.Method.GET, "/"))
-        verify(exactly = 1) { postgresDatabase.upsertAuditLogStatus(LocalDate.now(), true, 2) }
+        verify(exactly = 1) { postgresDatabase.upsertAuditLogStatus(LocalDate.now().minusDays(1), LocalDate.now(), true, 2) }
     }
 
     @Test
@@ -155,6 +155,7 @@ class AuditLogHandlerTest {
         every { postgresDatabase.fetchAuditLogStatus(any(), any()) }.returns(
             listOf(
                 AuditLogStatus(
+                    eventDate = LocalDate.now().minusDays(1),
                     syncDate = LocalDate.now(),
                     success = true,
                     numberOfRecords = 1
