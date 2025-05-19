@@ -38,20 +38,22 @@ document.addEventListener("DOMContentLoaded", function () {
         <table class="table-columns" border="1" style="border-collapse: collapse; margin: 0 auto;">
             <thead>
                 <tr>
-                    <th>Log Date</th>
+                    <th>Sync Date</th>
+                    <th>Event Date</th>
                     <th>Success</th>
                     <th>Number of Records</th>
                 </tr>
             </thead>
-            <tbody>
-                ${Object.entries(metadata).map(([date, records]) =>
-            Object.entries(records).map(([success, count]) => `
-                        <tr>
-                            <td>${date}</td>
-                            <td>${success}</td>
-                            <td>${count}</td>
-                        </tr>
-                    `).join('')
+        <tbody>
+    ${Object.entries(metadata).flatMap(([syncDate, records]) =>
+            records.map(record => `
+            <tr>
+                <td>${syncDate}</td>
+                <td>${record.eventDate}</td>
+                <td>${record.success}</td>
+                <td>${record.numberOfRecords}</td>
+            </tr>
+        `).join('')
         ).join('')}
             </tbody>
         </table>

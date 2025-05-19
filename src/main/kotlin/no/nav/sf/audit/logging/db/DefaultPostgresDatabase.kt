@@ -28,16 +28,12 @@ class DefaultPostgresDatabase : PostgresDatabase {
         transactionIsolation = "TRANSACTION_REPEATABLE_READ" // Isolation level that ensure the same snapshot of db during one transaction
     }
 
-    override fun retrieveAuditLogStatusesAsMap(): MutableMap<LocalDate, MutableMap<Boolean, Int>> {
+    override fun retrieveAuditLogStatusesAsMap(): MutableMap<LocalDate, List<AuditLogStatus>> {
         return transaction {
             AuditLogStatusTable.selectAll()
                 .map { it.toAuditLogStatus() }
                 .groupBy { it.syncDate }
-                .mapValues { entry ->
-                    entry.value.groupBy { it.success }
-                        .mapValues { innerEntry -> innerEntry.value.sumOf { it.numberOfRecords } }
-                        .toMutableMap()
-                }.toMutableMap()
+                .toMutableMap()
         }
     }
 

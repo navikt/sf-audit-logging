@@ -8,7 +8,8 @@ class ModelTest {
     @Test
     fun `Should get metadata in JSON format`() {
         val metadata = getMetaData()
-        assertTrue(metadata.contains("\"true\": 45"))
-        assertTrue(metadata.contains("\"false\": 5"))
+
+        assertTrue(metadata.contains("\"numberOfRecords\": 45") && metadata.contains("\"success\": true"))
+        assertTrue(metadata.contains("\"numberOfRecords\": 5") && metadata.contains("\"success\": false"))
     }
 }
