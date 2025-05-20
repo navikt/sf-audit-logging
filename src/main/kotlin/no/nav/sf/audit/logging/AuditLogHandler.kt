@@ -19,13 +19,16 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient, postgresDa
         var totalNumberOfLoggedRecords = 0.0
         var totalNumberOfApiCalls = 0
 
+        val eventDateParam = it.query("eventDate")
+        val eventDate = eventDateParam?.let { date: String -> LocalDate.parse(date) } ?: LocalDate.now().minusDays(1)
+
         val successfulTransferSameDay = postgresDatabase.fetchAuditLogSyncStatus(LocalDate.now(), true)
         if (successfulTransferSameDay.isNotEmpty()) {
             // Stop if we have already transferred today
             return@fetchAndTransfer Response(OK).body(Body(totalNumberOfLoggedRecords.toString()))
         }
         Metrics.clearUriEventsCounter()
-        val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents(LocalDate.now().minusDays(-1)))
+        val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents(eventDate))
 
         filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
             val personIdentsResponse = salesforceClient.fetchPersonIdents(
