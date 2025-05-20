@@ -11,6 +11,7 @@ import org.http4k.client.ApacheClient.invoke
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import java.net.URLEncoder
+import java.time.LocalDate
 
 class DefaultSalesforceClient(
     private val accessTokenHandler: AccessTokenHandler = DefaultAccessTokenHandler(),
@@ -20,8 +21,8 @@ class DefaultSalesforceClient(
 
     private val apiVersion = env(config_SALESFORCE_API_VERSION)
 
-    override fun fetchUriEvents(): MutableList<UriEvent> {
-        val soqlQuery = "SELECT EventDate, Operation, QueriedEntities, RecordId, Username, UserType FROM LightningUriEvent WHERE EventDate=yesterday"
+    override fun fetchUriEvents(eventDate: LocalDate): MutableList<UriEvent> {
+        val soqlQuery = "SELECT EventDate, Operation, QueriedEntities, RecordId, Username, UserType FROM LightningUriEvent " + dateRestrictionExtention(eventDate)
         val encodedQuery = URLEncoder.encode(soqlQuery, "UTF-8")
         var done = false
         var nextRecordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
@@ -106,4 +107,7 @@ class DefaultSalesforceClient(
 
         return PersonIdentsResponse(objectName, numberOfApiCalls, personIdentByRecordId)
     }
+
+    private fun dateRestrictionExtention(date: LocalDate) =
+        " EventDate >= ${date}T00:00:00Z AND EventDate < ${date.plusDays(1)}T00:00:00Z"
 }

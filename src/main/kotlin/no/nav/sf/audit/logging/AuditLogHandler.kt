@@ -25,7 +25,7 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient, postgresDa
             return@fetchAndTransfer Response(OK).body(Body(totalNumberOfLoggedRecords.toString()))
         }
         Metrics.clearUriEventsCounter()
-        val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents())
+        val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents(LocalDate.now().minusDays(-1)))
 
         filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
             val personIdentsResponse = salesforceClient.fetchPersonIdents(

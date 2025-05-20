@@ -34,7 +34,7 @@ class AuditLogHandlerTest {
         every { Metrics.uriEventsWithPersonIdent.labels("Account") } returns mockCounterChild
 
         val uriEvents = TestDataFactory.getUriEvents(2)
-        every { salesforceClient.fetchUriEvents() }.returns(uriEvents)
+        every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
 
         val personIdentByRecordId = mapOf(
             "1" to "12345678901",
@@ -57,7 +57,7 @@ class AuditLogHandlerTest {
         every { Metrics.uriEventsWithPersonIdent.labels("Account") } returns mockCounterChild
 
         val uriEvents = TestDataFactory.getUriEvents(2)
-        every { salesforceClient.fetchUriEvents() }.returns(uriEvents)
+        every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
 
         val personIdentByRecordId = mapOf(
             "1" to "12345678901"
@@ -80,7 +80,7 @@ class AuditLogHandlerTest {
         val mockCounterChild = mockk<Counter.Child>(relaxed = true)
         every { Metrics.uriEventsWithPersonIdent.labels("Account") } returns mockCounterChild
 
-        every { salesforceClient.fetchUriEvents() }.returns(uriEventsWithSameRecordId)
+        every { salesforceClient.fetchUriEvents(any()) }.returns(uriEventsWithSameRecordId)
 
         val personIdentByRecordId = mapOf(
             "1" to "12345678901"
@@ -104,7 +104,7 @@ class AuditLogHandlerTest {
         every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
         every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
 
-        every { salesforceClient.fetchUriEvents() }.returns(uriEvents)
+        every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
 
         // no matching person idents
         val personIdentByRecordId = mapOf(
@@ -129,7 +129,7 @@ class AuditLogHandlerTest {
         every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
         every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
 
-        every { salesforceClient.fetchUriEvents() }.returns(uriEvents)
+        every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
 
         val personIdentByRecordId = mapOf(
             "1" to "12345678901",
@@ -151,7 +151,7 @@ class AuditLogHandlerTest {
         every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
         every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
 
-        every { salesforceClient.fetchUriEvents() }.returns(uriEvents)
+        every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
         every { postgresDatabase.fetchAuditLogSyncStatus(any(), any()) }.returns(
             listOf(
                 AuditLogSyncStatus(

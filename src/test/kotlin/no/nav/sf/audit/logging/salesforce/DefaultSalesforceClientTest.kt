@@ -9,6 +9,7 @@ import org.http4k.core.Response.Companion.invoke
 import org.http4k.core.Status
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 
 class DefaultSalesforceClientTest {
 
@@ -26,7 +27,7 @@ class DefaultSalesforceClientTest {
         val mockResponse = Response(Status.OK).body(mockResponseBody)
         every { client(any()) } returns mockResponse
 
-        val result = classUnderTest.fetchUriEvents()
+        val result = classUnderTest.fetchUriEvents(LocalDate.now().minusDays(1))
         assertEquals(1, result.size)
     }
 
