@@ -20,9 +20,9 @@ class MockPostgresDatabase : PostgresDatabase {
         return null
     }
 
-    override fun fetchAuditLogSyncStatus(syncDate: LocalDate, success: Boolean): List<AuditLogSyncStatus> {
+    override fun fetchAuditLogSyncStatus(eventDate: LocalDate, success: Boolean): List<AuditLogSyncStatus> {
         return listOf(
-            AuditLogSyncStatus(syncDate.minusDays(1), syncDate, 10, success)
+            AuditLogSyncStatus(eventDate, LocalDate.now(), 10, success)
         )
     }
 }

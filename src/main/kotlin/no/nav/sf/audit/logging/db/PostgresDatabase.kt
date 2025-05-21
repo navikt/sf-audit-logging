@@ -7,5 +7,5 @@ interface PostgresDatabase {
 
     fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, success: Boolean, numberOfRecords: Int): AuditLogSyncStatus?
 
-    fun fetchAuditLogSyncStatus(syncDate: LocalDate, success: Boolean): List<AuditLogSyncStatus>
+    fun fetchAuditLogSyncStatus(eventDate: LocalDate, success: Boolean): List<AuditLogSyncStatus>
 }

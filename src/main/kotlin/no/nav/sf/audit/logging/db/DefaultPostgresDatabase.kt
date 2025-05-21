@@ -1,9 +1,11 @@
 package no.nav.sf.audit.logging.db
+
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import no.nav.sf.audit.logging.Application
 import no.nav.sf.audit.logging.env
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.upsert
@@ -25,7 +27,7 @@ class DefaultPostgresDatabase : PostgresDatabase {
         connectionTimeout = 250
         idleTimeout = 10000
         isAutoCommit = false
-        transactionIsolation = "TRANSACTION_REPEATABLE_READ" // Isolation level that ensure the same snapshot of db during one transaction
+        transactionIsolation = "TRANSACTION_REPEATABLE_READ"
     }
 
     override fun retrieveAuditLogSyncStatusesAsMap(): MutableMap<LocalDate, List<AuditLogSyncStatus>> {
@@ -50,7 +52,14 @@ class DefaultPostgresDatabase : PostgresDatabase {
         }.resultedValues?.firstOrNull()?.toAuditLogSyncStatus()
     }
 
-    override fun fetchAuditLogSyncStatus(syncDate: LocalDate, success: Boolean): List<AuditLogSyncStatus> {
-        return emptyList()
+    override fun fetchAuditLogSyncStatus(eventDate: LocalDate, success: Boolean): List<AuditLogSyncStatus> {
+        return transaction {
+            AuditLogSyncStatusTable.selectAll()
+                .where {
+                    (AuditLogSyncStatusTable.eventDate eq eventDate) and
+                        (AuditLogSyncStatusTable.success eq success)
+                }
+                .map { it.toAuditLogSyncStatus() }
+        }
     }
 }

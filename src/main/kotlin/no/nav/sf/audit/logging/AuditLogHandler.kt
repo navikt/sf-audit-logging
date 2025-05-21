@@ -22,7 +22,7 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient, postgresDa
         val eventDateParam = it.query("eventDate")
         val eventDate = eventDateParam?.let { date: String -> LocalDate.parse(date) } ?: LocalDate.now().minusDays(1)
 
-        val successfulTransferSameDay = postgresDatabase.fetchAuditLogSyncStatus(LocalDate.now(), true)
+        val successfulTransferSameDay = postgresDatabase.fetchAuditLogSyncStatus(eventDate, true)
         if (successfulTransferSameDay.isNotEmpty()) {
             // Stop if we have already transferred today
             return@fetchAndTransfer Response(OK).body(Body(totalNumberOfLoggedRecords.toString()))
