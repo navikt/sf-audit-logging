@@ -1,7 +1,6 @@
 package no.nav.sf.audit.logging.db
 
 import no.nav.sf.audit.logging.Application
-import no.nav.sf.audit.logging.local
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.date
@@ -26,15 +25,13 @@ object AuditLogSyncStatusTable : Table("audit_log_status") {
     }
 }
 
-private val postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()
-
 fun ResultRow.toAuditLogSyncStatus() = AuditLogSyncStatus(
     eventDate = this[AuditLogSyncStatusTable.eventDate],
     syncDate = this[AuditLogSyncStatusTable.syncDate],
     numberOfRecords = this[AuditLogSyncStatusTable.numberOfRecords],
     success = this[AuditLogSyncStatusTable.success]
 )
-fun getMetaData(): String {
+fun getMetaData(postgresDatabase: PostgresDatabase): String {
     val AuditLogSyncStatuses = postgresDatabase.retrieveAuditLogSyncStatusesAsMap()
     val now = LocalDateTime.now()
     val last30Days = now.minusDays(30).toLocalDate()

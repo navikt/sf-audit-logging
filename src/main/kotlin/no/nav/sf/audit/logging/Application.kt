@@ -46,6 +46,6 @@ object Application {
     }
 
     private val metaDataHandler: HttpHandler = {
-        Response(OK).body(getMetaData())
+        Response(OK).body(getMetaData(postgresDatabase))
     }
 }
