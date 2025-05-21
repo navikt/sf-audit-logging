@@ -2,6 +2,7 @@ package no.nav.sf.audit.logging.db
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import mu.KotlinLogging
 import no.nav.sf.audit.logging.Application
 import no.nav.sf.audit.logging.env
 import org.jetbrains.exposed.sql.Database
@@ -14,10 +15,20 @@ import java.time.LocalDate
 const val NAIS_DB_PREFIX = "NAIS_DATABASE_SF_AUDIT_LOGGING_SF_AUDIT_LOGGING_"
 
 class DefaultPostgresDatabase : PostgresDatabase {
+    val log = KotlinLogging.logger { }
 
-    val database = Database.connect(HikariDataSource(hikariConfig()))
-
-    private val dbJdbcUrl = env("$NAIS_DB_PREFIX${Application.context}_JDBC_URL")
+    val database = try {
+        Database.connect(HikariDataSource(hikariConfig()))
+    } catch (e: Exception) {
+        log.error(e) { "Could not connect to database" }
+        null
+    }
+    private val dbJdbcUrl = try {
+        env("$NAIS_DB_PREFIX${Application.context}_JDBC_URL")
+    } catch (e: Exception) {
+        log.error(e) { "Could not retrieve JDBC URL from environment" }
+        null
+    }
     private fun hikariConfig(): HikariConfig = HikariConfig().apply {
         jdbcUrl = dbJdbcUrl
         driverClassName = "org.postgresql.Driver"
