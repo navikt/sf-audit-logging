@@ -2,7 +2,10 @@ package no.nav.sf.audit.logging
 
 import mu.KotlinLogging
 import no.nav.sf.audit.logging.Metrics.numberOfApiCalls
+import no.nav.sf.audit.logging.db.DefaultPostgresDatabase
+import no.nav.sf.audit.logging.db.MockPostgresDatabase
 import no.nav.sf.audit.logging.db.PostgresDatabase
+import no.nav.sf.audit.logging.salesforce.DefaultSalesforceClient
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import no.nav.sf.audit.logging.salesforce.UriEvent
@@ -13,7 +16,7 @@ import org.http4k.core.Response.Companion.invoke
 import org.http4k.core.Status.Companion.OK
 import java.time.LocalDate
 
-class AuditLogHandler(private val salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase) {
+class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSalesforceClient(), postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()) {
     private val objectFilter = ObjectFilter()
     private val log = KotlinLogging.logger { }
 

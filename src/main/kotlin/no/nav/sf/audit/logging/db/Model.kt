@@ -1,6 +1,7 @@
 package no.nav.sf.audit.logging.db
 
-import no.nav.sf.audit.logging.Application
+import no.nav.sf.audit.logging.configureGson
+import no.nav.sf.audit.logging.local
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.date
@@ -31,11 +32,11 @@ fun ResultRow.toAuditLogSyncStatus() = AuditLogSyncStatus(
     numberOfRecords = this[AuditLogSyncStatusTable.numberOfRecords],
     success = this[AuditLogSyncStatusTable.success]
 )
-fun getMetaData(postgresDatabase: PostgresDatabase): String {
+fun getMetaData(postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()): String {
     val AuditLogSyncStatuses = postgresDatabase.retrieveAuditLogSyncStatusesAsMap()
     val now = LocalDateTime.now()
     val last30Days = now.minusDays(30).toLocalDate()
 
     val filteredAuditLogSyncStatuses = AuditLogSyncStatuses.filterKeys { it.isAfter(last30Days) }
-    return Application.gson.toJson(filteredAuditLogSyncStatuses.toSortedMap(compareByDescending { it }))
+    return configureGson().toJson(filteredAuditLogSyncStatuses.toSortedMap(compareByDescending { it }))
 }
