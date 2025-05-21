@@ -1,5 +1,6 @@
 package no.nav.sf.audit.logging
 
+import mu.KotlinLogging
 import no.nav.sf.audit.logging.Metrics.numberOfApiCalls
 import no.nav.sf.audit.logging.db.PostgresDatabase
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
@@ -14,6 +15,7 @@ import java.time.LocalDate
 
 class AuditLogHandler(private val salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase) {
     private val objectFilter = ObjectFilter()
+    private val log = KotlinLogging.logger { }
 
     val fetchAndTransfer: HttpHandler = fetchAndTransfer@{
         var totalNumberOfLoggedRecords = 0.0
@@ -22,11 +24,13 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient, postgresDa
         val eventDateParam = it.query("eventDate")
         val eventDate = eventDateParam?.let { date: String -> LocalDate.parse(date) } ?: LocalDate.now().minusDays(1)
 
-        val successfulTransferSameDay = postgresDatabase.fetchAuditLogSyncStatus(eventDate, true)
-        if (successfulTransferSameDay.isNotEmpty()) {
-            // Stop if we have already transferred today
+        val successfulTransfersForEventDate = postgresDatabase.fetchAuditLogSyncStatus(eventDate, true)
+        if (successfulTransfersForEventDate.isNotEmpty()) {
+            // Stop if we have already transferred for the event date
+            log.warn { "Audit logs have already been transferred for $eventDate" }
             return@fetchAndTransfer Response(OK).body(Body(totalNumberOfLoggedRecords.toString()))
         }
+        log.info { "Fetch and transfer audit logs for $eventDate" }
         Metrics.clearUriEventsCounter()
         val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents(eventDate))
 

@@ -4,14 +4,14 @@ import java.time.LocalDate
 
 class MockPostgresDatabase : PostgresDatabase {
     override fun retrieveAuditLogSyncStatusesAsMap(): MutableMap<LocalDate, List<AuditLogSyncStatus>> {
-        val AuditLogSyncStatusesList = listOf(
+        val auditLogSyncStatusesList = listOf(
             AuditLogSyncStatus(LocalDate.now().minusDays(1), LocalDate.now(), 10, true),
             AuditLogSyncStatus(LocalDate.now().minusDays(2), LocalDate.now().minusDays(1), 5, false),
             AuditLogSyncStatus(LocalDate.now().minusDays(2), LocalDate.now().minusDays(1), 45, true),
             AuditLogSyncStatus(LocalDate.now().minusDays(3), LocalDate.now().minusDays(2), 20, true),
         )
 
-        return AuditLogSyncStatusesList.groupBy { it.syncDate }
+        return auditLogSyncStatusesList.groupBy { it.syncDate }
             .mapValues { entry -> entry.value }
             .toMutableMap()
     }
