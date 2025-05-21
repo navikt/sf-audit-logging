@@ -9,17 +9,16 @@ import no.nav.sf.audit.logging.db.AuditLogSyncStatus
 import no.nav.sf.audit.logging.db.PostgresDatabase
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
-import org.http4k.core.Response
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-class AuditLogHandlerTest {
+class AuditLogTest {
 
     private val salesforceClient: SalesforceClient = mockk<SalesforceClient>()
     private val postgresDatabase = mockk<PostgresDatabase>()
-    private val classUnderTest = AuditLogHandler(salesforceClient, postgresDatabase)
+    private val classUnderTest = AuditLog(salesforceClient, postgresDatabase)
 
     @BeforeEach
     fun setup() {
@@ -43,8 +42,8 @@ class AuditLogHandlerTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result: Response = classUnderTest.fetchAndTransfer(org.http4k.core.Request(org.http4k.core.Method.GET, "/"))
-        assertEquals(uriEvents.size.toDouble(), result.bodyString().toDouble())
+        val result = classUnderTest.fetchAndTransfer(LocalDate.now())
+        assertEquals(uriEvents.size, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
         verify(exactly = 1) { mockCounterChild.inc(uriEvents.size.toDouble()) }
@@ -65,8 +64,8 @@ class AuditLogHandlerTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result: Response = classUnderTest.fetchAndTransfer(org.http4k.core.Request(org.http4k.core.Method.GET, "/"))
-        assertEquals(1.0, result.bodyString().toDouble())
+        val result = classUnderTest.fetchAndTransfer(LocalDate.now())
+        assertEquals(1, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
         verify(exactly = 1) { mockCounterChild.inc(1.0) }
@@ -88,8 +87,8 @@ class AuditLogHandlerTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result: Response = classUnderTest.fetchAndTransfer(org.http4k.core.Request(org.http4k.core.Method.GET, "/"))
-        assertEquals(2.0, result.bodyString().toDouble())
+        val result = classUnderTest.fetchAndTransfer(LocalDate.now())
+        assertEquals(2, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
         verify(exactly = 1) { mockCounterChild.inc(2.0) }
@@ -113,8 +112,8 @@ class AuditLogHandlerTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result: Response = classUnderTest.fetchAndTransfer(org.http4k.core.Request(org.http4k.core.Method.GET, "/"))
-        assertEquals(0.0, result.bodyString().toDouble())
+        val result = classUnderTest.fetchAndTransfer(LocalDate.now())
+        assertEquals(0, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") }
         verify { mockCounterChild.inc(1.0) }
@@ -138,7 +137,7 @@ class AuditLogHandlerTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        classUnderTest.fetchAndTransfer(org.http4k.core.Request(org.http4k.core.Method.GET, "/"))
+        classUnderTest.fetchAndTransfer(LocalDate.now())
         verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now().minusDays(1), LocalDate.now(), true, 2) }
     }
 
@@ -170,7 +169,7 @@ class AuditLogHandlerTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result: Response = classUnderTest.fetchAndTransfer(org.http4k.core.Request(org.http4k.core.Method.GET, "/"))
-        assertEquals(0.0, result.bodyString().toDouble())
+        val result = classUnderTest.fetchAndTransfer(LocalDate.now())
+        assertEquals(0, result)
     }
 }

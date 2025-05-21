@@ -1,7 +1,6 @@
 package no.nav.sf.audit.logging
 
 import mu.KotlinLogging
-import no.nav.sf.audit.logging.Metrics.numberOfApiCalls
 import no.nav.sf.audit.logging.db.DefaultPostgresDatabase
 import no.nav.sf.audit.logging.db.MockPostgresDatabase
 import no.nav.sf.audit.logging.db.PostgresDatabase
@@ -9,29 +8,21 @@ import no.nav.sf.audit.logging.salesforce.DefaultSalesforceClient
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import no.nav.sf.audit.logging.salesforce.UriEvent
-import org.http4k.core.Body
-import org.http4k.core.HttpHandler
-import org.http4k.core.Response
-import org.http4k.core.Response.Companion.invoke
-import org.http4k.core.Status.Companion.OK
 import java.time.LocalDate
 
-class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSalesforceClient(), postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()) {
+class AuditLog(private val salesforceClient: SalesforceClient = DefaultSalesforceClient(), private val postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()) {
     private val objectFilter = ObjectFilter()
     private val log = KotlinLogging.logger { }
 
-    val fetchAndTransfer: HttpHandler = fetchAndTransfer@{
+    fun fetchAndTransfer(eventDate: LocalDate): Int {
         var totalNumberOfLoggedRecords = 0.0
         var totalNumberOfApiCalls = 0
-
-        val eventDateParam = it.query("eventDate")
-        val eventDate = eventDateParam?.let { date: String -> LocalDate.parse(date) } ?: LocalDate.now().minusDays(1)
 
         val successfulTransfersForEventDate = postgresDatabase.fetchAuditLogSyncStatus(eventDate, true)
         if (successfulTransfersForEventDate.isNotEmpty()) {
             // Stop if we have already transferred for the event date
             log.warn { "Audit logs have already been transferred for $eventDate" }
-            return@fetchAndTransfer Response(OK).body(Body(totalNumberOfLoggedRecords.toString()))
+            return 0
         }
         log.info { "Fetch and transfer audit logs for $eventDate" }
         Metrics.clearUriEventsCounter()
@@ -56,7 +47,7 @@ class AuditLogHandler(private val salesforceClient: SalesforceClient = DefaultSa
         }
         postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now().minusDays(1), LocalDate.now(), true, totalNumberOfLoggedRecords.toInt())
         Metrics.numberOfApiCalls.labels("RequestPersonIdents").inc(totalNumberOfApiCalls.toDouble())
-        Response(OK).body(Body(totalNumberOfLoggedRecords.toString()))
+        return totalNumberOfLoggedRecords.toInt()
     }
 
     private fun setUriEventsWithAndWithoutPersonIdent(events: List<UriEvent>, personIdentsResponse: PersonIdentsResponse): Pair<Double, Double> {

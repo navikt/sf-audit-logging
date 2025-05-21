@@ -17,6 +17,12 @@ const val NAIS_DB_PREFIX = "NAIS_DATABASE_SF_AUDIT_LOGGING_SF_AUDIT_LOGGING_"
 class DefaultPostgresDatabase : PostgresDatabase {
     val log = KotlinLogging.logger { }
 
+    private val dbHost = env("${no.nav.sf.audit.logging.db.NAIS_DB_PREFIX}${Application.context}_HOST")
+    private val dbPort = env("${no.nav.sf.audit.logging.db.NAIS_DB_PREFIX}${Application.context}_PORT")
+    private val dbName = env("${no.nav.sf.audit.logging.db.NAIS_DB_PREFIX}${Application.context}_DATABASE")
+    private val dbUsername = env("${no.nav.sf.audit.logging.db.NAIS_DB_PREFIX}${Application.context}_USERNAME")
+    private val dbPassword = env("${no.nav.sf.audit.logging.db.NAIS_DB_PREFIX}${Application.context}_PASSWORD")
+
     val database = try {
         Database.connect(HikariDataSource(hikariConfig()))
     } catch (e: Exception) {
@@ -31,6 +37,11 @@ class DefaultPostgresDatabase : PostgresDatabase {
     }
     private fun hikariConfig(): HikariConfig = HikariConfig().apply {
         jdbcUrl = dbJdbcUrl
+        addDataSourceProperty("serverName", dbHost)
+        addDataSourceProperty("port", dbPort)
+        addDataSourceProperty("databaseName", dbName)
+        addDataSourceProperty("user", dbUsername)
+        addDataSourceProperty("password", dbPassword)
         driverClassName = "org.postgresql.Driver"
         minimumIdle = 1
         maxLifetime = 26000

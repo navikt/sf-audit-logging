@@ -13,12 +13,13 @@ import org.http4k.routing.static
 import org.http4k.server.ApacheServer
 import org.http4k.server.Http4kServer
 import org.http4k.server.asServer
+import java.time.LocalDate
 
 object Application {
     private val log = KotlinLogging.logger { }
     private val cluster = System.getenv(env_NAIS_CLUSTER_NAME) ?: "local"
-    private val auditLogHandler = AuditLogHandler()
     val context = env(config_CONTEXT)
+    val gson = configureGson()
 
     fun apiServer(port: Int): Http4kServer = api().asServer(ApacheServer(port))
 
@@ -29,12 +30,19 @@ object Application {
         "/internal/gui" bind Method.GET to static(ResourceLoader.Classpath("gui")),
         "/internal/guiLabel" bind Method.GET to { Response(OK).body(context) },
         "/internal/metadata" bind Method.GET to metaDataHandler,
-        "/internal/fetchAndTransfer" bind Method.GET to auditLogHandler.fetchAndTransfer
+        "/internal/fetchAndTransfer" bind Method.GET to auditLogHandler,
     )
 
     fun start() {
         log.info { "Starting in cluster $cluster" }
         apiServer(8080).start()
+    }
+
+    private val auditLogHandler: HttpHandler = {
+        val eventDateParam = it.query("eventDate")
+        val eventDate = eventDateParam?.let { date: String -> LocalDate.parse(date) } ?: LocalDate.now().minusDays(1)
+        val numberOfRecordsTransferred = AuditLog().fetchAndTransfer(eventDate)
+        Response(OK).body(numberOfRecordsTransferred.toString())
     }
 
     private val metaDataHandler: HttpHandler = {

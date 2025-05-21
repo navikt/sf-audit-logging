@@ -1,6 +1,6 @@
 package no.nav.sf.audit.logging.db
 
-import no.nav.sf.audit.logging.configureGson
+import no.nav.sf.audit.logging.Application
 import no.nav.sf.audit.logging.local
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.Table
@@ -38,5 +38,5 @@ fun getMetaData(postgresDatabase: PostgresDatabase = if (local) MockPostgresData
     val last30Days = now.minusDays(30).toLocalDate()
 
     val filteredAuditLogSyncStatuses = AuditLogSyncStatuses.filterKeys { it.isAfter(last30Days) }
-    return configureGson().toJson(filteredAuditLogSyncStatuses.toSortedMap(compareByDescending { it }))
+    return Application.gson.toJson(filteredAuditLogSyncStatuses.toSortedMap(compareByDescending { it }))
 }
