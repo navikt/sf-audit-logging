@@ -39,7 +39,7 @@ spec:
   accessPolicy:
     inbound:
       rules:
-        - application: audit-logging-fetch-and-transfer-job
+        - application: audit-logging-fetch-and-log-job
     outbound:
       external:
         - host: navdialog--sit2.my.salesforce.com

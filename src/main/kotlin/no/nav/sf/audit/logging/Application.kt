@@ -30,7 +30,7 @@ object Application {
         "/internal/gui" bind Method.GET to static(ResourceLoader.Classpath("gui")),
         "/internal/guiLabel" bind Method.GET to { Response(OK).body(context) },
         "/internal/metadata" bind Method.GET to metaDataHandler,
-        "/internal/fetchAndTransfer" bind Method.GET to auditLogHandler,
+        "/internal/fetchAndLog" bind Method.GET to auditLogHandler,
     )
 
     fun start() {
@@ -41,8 +41,8 @@ object Application {
     private val auditLogHandler: HttpHandler = {
         val eventDateParam = it.query("eventDate")
         val eventDate = eventDateParam?.let { date: String -> LocalDate.parse(date) } ?: LocalDate.now().minusDays(1)
-        val numberOfRecordsTransferred = AuditLog().fetchAndTransfer(eventDate)
-        Response(OK).body(numberOfRecordsTransferred.toString())
+        val numberOfRecordsLogged = AuditLog().fetchAndLog(eventDate)
+        Response(OK).body(numberOfRecordsLogged.toString())
     }
 
     private val metaDataHandler: HttpHandler = {

@@ -14,17 +14,17 @@ class AuditLog(private val salesforceClient: SalesforceClient = DefaultSalesforc
     private val objectFilter = ObjectFilter()
     private val log = KotlinLogging.logger { }
 
-    fun fetchAndTransfer(eventDate: LocalDate): Int {
+    fun fetchAndLog(eventDate: LocalDate): Int {
         var totalNumberOfLoggedRecords = 0.0
         var totalNumberOfApiCalls = 0
 
-        val successfulTransfersForEventDate = postgresDatabase.fetchAuditLogSyncStatus(eventDate, true)
-        if (successfulTransfersForEventDate.isNotEmpty()) {
-            // Stop if we have already transferred for the event date
-            log.warn { "Audit logs have already been transferred for $eventDate" }
+        val successfulLoggedForEventDate = postgresDatabase.fetchAuditLogSyncStatus(eventDate, true)
+        if (successfulLoggedForEventDate.isNotEmpty()) {
+            // Stop if we have already logged audit logs for the event date
+            log.warn { "Audit logs have already been logged for $eventDate" }
             return 0
         }
-        log.info { "Fetch and transfer audit logs for $eventDate" }
+        log.info { "Fetch and log audit logs for $eventDate" }
         Metrics.clearUriEventsCounter()
         val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents(eventDate))
 

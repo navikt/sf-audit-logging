@@ -42,7 +42,7 @@ class AuditLogTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result = classUnderTest.fetchAndTransfer(LocalDate.now())
+        val result = classUnderTest.fetchAndLog(LocalDate.now())
         assertEquals(uriEvents.size, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
@@ -64,7 +64,7 @@ class AuditLogTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result = classUnderTest.fetchAndTransfer(LocalDate.now())
+        val result = classUnderTest.fetchAndLog(LocalDate.now())
         assertEquals(1, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
@@ -87,7 +87,7 @@ class AuditLogTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result = classUnderTest.fetchAndTransfer(LocalDate.now())
+        val result = classUnderTest.fetchAndLog(LocalDate.now())
         assertEquals(2, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
@@ -112,7 +112,7 @@ class AuditLogTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result = classUnderTest.fetchAndTransfer(LocalDate.now())
+        val result = classUnderTest.fetchAndLog(LocalDate.now())
         assertEquals(0, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") }
@@ -137,12 +137,12 @@ class AuditLogTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        classUnderTest.fetchAndTransfer(LocalDate.now())
+        classUnderTest.fetchAndLog(LocalDate.now())
         verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now().minusDays(1), LocalDate.now(), true, 2) }
     }
 
     @Test
-    fun `Should not transfer any logs if a transfer has already run successfully on the same day`() {
+    fun `Should log nothing if audit logs already has been successfully logged on the same day`() {
         val uriEvents = TestDataFactory.getUriEvents(2)
 
         val mockCounterChild = mockk<Counter.Child>(relaxed = true)
@@ -169,7 +169,7 @@ class AuditLogTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result = classUnderTest.fetchAndTransfer(LocalDate.now())
+        val result = classUnderTest.fetchAndLog(LocalDate.now())
         assertEquals(0, result)
     }
 }
