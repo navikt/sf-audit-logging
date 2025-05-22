@@ -37,11 +37,6 @@ class DefaultPostgresDatabase : PostgresDatabase {
     }
     private fun hikariConfig(): HikariConfig = HikariConfig().apply {
         jdbcUrl = dbJdbcUrl
-        addDataSourceProperty("serverName", dbHost)
-        addDataSourceProperty("port", dbPort)
-        addDataSourceProperty("databaseName", dbName)
-        addDataSourceProperty("user", dbUsername)
-        addDataSourceProperty("password", dbPassword)
         driverClassName = "org.postgresql.Driver"
         minimumIdle = 1
         maxLifetime = 26000
