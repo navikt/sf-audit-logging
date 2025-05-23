@@ -22,7 +22,7 @@ object AuditLogSyncStatusTable : Table("audit_log_status") {
     val success = bool("success")
 
     init {
-        uniqueIndex(eventDate, success)
+        uniqueIndex(eventDate)
     }
 }
 

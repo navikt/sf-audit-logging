@@ -53,7 +53,7 @@ object Application {
 
     private val initDbHandler: HttpHandler = {
         val postgresDatabase = DefaultPostgresDatabase()
-        postgresDatabase.createStatusTable(false)
+        postgresDatabase.createStatusTable(true)
         Response(OK).body("Table created")
     }
 }
