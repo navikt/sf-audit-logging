@@ -1,6 +1,7 @@
 package no.nav.sf.audit.logging
 
 import mu.KotlinLogging
+import no.nav.sf.audit.logging.db.DefaultPostgresDatabase
 import no.nav.sf.audit.logging.db.getMetaData
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
@@ -31,6 +32,7 @@ object Application {
         "/internal/guiLabel" bind Method.GET to { Response(OK).body(context) },
         "/internal/metadata" bind Method.GET to metaDataHandler,
         "/internal/fetchAndLog" bind Method.GET to auditLogHandler,
+        "/internal/db" bind Method.GET to dbHandler,
     )
 
     fun start() {
@@ -47,5 +49,10 @@ object Application {
 
     private val metaDataHandler: HttpHandler = {
         Response(OK).body(getMetaData())
+    }
+
+    private val dbHandler: HttpHandler = {
+        val postgresDatabase = DefaultPostgresDatabase()
+        Response(OK).body(postgresDatabase.dbJdbcUrl)
     }
 }

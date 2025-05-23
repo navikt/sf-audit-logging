@@ -15,7 +15,7 @@ const val NAIS_DB_PREFIX = "NAIS_DATABASE_SF_AUDIT_LOGGING_SF_AUDIT_LOGGING_"
 
 class DefaultPostgresDatabase : PostgresDatabase {
 
-    private val dbJdbcUrl = env("${no.nav.sf.audit.logging.db.NAIS_DB_PREFIX}${Application.context}_JDBC_URL")
+    val dbJdbcUrl = env("${no.nav.sf.audit.logging.db.NAIS_DB_PREFIX}${Application.context}_JDBC_URL")
     val database = Database.connect(HikariDataSource(hikariConfig()))
 
     private fun hikariConfig(): HikariConfig = HikariConfig().apply {
@@ -31,7 +31,7 @@ class DefaultPostgresDatabase : PostgresDatabase {
     }
 
     override fun retrieveAuditLogSyncStatusesAsMap(): MutableMap<LocalDate, List<AuditLogSyncStatus>> {
-        return transaction {
+        return transaction(database) {
             AuditLogSyncStatusTable.selectAll()
                 .map { it.toAuditLogSyncStatus() }
                 .groupBy { it.syncDate }
@@ -40,7 +40,7 @@ class DefaultPostgresDatabase : PostgresDatabase {
     }
 
     override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, success: Boolean, numberOfRecords: Int): AuditLogSyncStatus? {
-        return transaction {
+        return transaction(database) {
             AuditLogSyncStatusTable.upsert(
                 keys = arrayOf(AuditLogSyncStatusTable.syncDate, AuditLogSyncStatusTable.success)
             ) {
@@ -53,7 +53,7 @@ class DefaultPostgresDatabase : PostgresDatabase {
     }
 
     override fun fetchAuditLogSyncStatus(eventDate: LocalDate, success: Boolean): List<AuditLogSyncStatus> {
-        return transaction {
+        return transaction(database) {
             AuditLogSyncStatusTable.selectAll()
                 .where {
                     (AuditLogSyncStatusTable.eventDate eq eventDate) and
