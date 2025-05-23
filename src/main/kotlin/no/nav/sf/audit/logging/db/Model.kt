@@ -15,13 +15,9 @@ data class AuditLogSyncStatus(
 )
 
 object AuditLogSyncStatusTable : Table("audit_log_status") {
-    val eventDate = date("log_date")
+    val eventDate = date("event_date").uniqueIndex()
     val syncDate = date("sync_date")
     val numberOfRecords = integer("number_of_records")
-
-    init {
-        uniqueIndex(eventDate)
-    }
 }
 
 fun ResultRow.toAuditLogSyncStatus() = AuditLogSyncStatus(
