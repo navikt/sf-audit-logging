@@ -10,8 +10,8 @@ import java.time.LocalDate
 class ModelTest {
     private val postgresDatabase = mockk<PostgresDatabase>()
     private val auditLogSyncStatusesList = listOf(
-        AuditLogSyncStatus(LocalDate.now().minusDays(1), LocalDate.now(), 45, true),
-        AuditLogSyncStatus(LocalDate.now().minusDays(1), LocalDate.now().minusDays(1), 5, false),
+        AuditLogSyncStatus(LocalDate.now().minusDays(1), LocalDate.now(), 45),
+        AuditLogSyncStatus(LocalDate.now().minusDays(1), LocalDate.now().minusDays(1), 5)
     )
 
     @BeforeEach
@@ -25,7 +25,7 @@ class ModelTest {
     fun `Should get metadata in JSON format`() {
         val metadata = getMetaData(postgresDatabase)
 
-        assertTrue(metadata.contains("\"numberOfRecords\": 45") && metadata.contains("\"success\": true"))
-        assertTrue(metadata.contains("\"numberOfRecords\": 5") && metadata.contains("\"success\": false"))
+        assertTrue(metadata.contains("\"numberOfRecords\": 45"))
+        assertTrue(metadata.contains("\"numberOfRecords\": 5"))
     }
 }

@@ -11,15 +11,13 @@ import java.time.LocalDateTime
 data class AuditLogSyncStatus(
     val eventDate: LocalDate,
     val syncDate: LocalDate,
-    val numberOfRecords: Int,
-    val success: Boolean
+    val numberOfRecords: Int
 )
 
 object AuditLogSyncStatusTable : Table("audit_log_status") {
     val eventDate = date("log_date")
     val syncDate = date("sync_date")
     val numberOfRecords = integer("number_of_records")
-    val success = bool("success")
 
     init {
         uniqueIndex(eventDate)
@@ -29,8 +27,7 @@ object AuditLogSyncStatusTable : Table("audit_log_status") {
 fun ResultRow.toAuditLogSyncStatus() = AuditLogSyncStatus(
     eventDate = this[AuditLogSyncStatusTable.eventDate],
     syncDate = this[AuditLogSyncStatusTable.syncDate],
-    numberOfRecords = this[AuditLogSyncStatusTable.numberOfRecords],
-    success = this[AuditLogSyncStatusTable.success]
+    numberOfRecords = this[AuditLogSyncStatusTable.numberOfRecords]
 )
 fun getMetaData(postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()): String {
     val AuditLogSyncStatuses = postgresDatabase.retrieveAuditLogSyncStatusesAsMap()

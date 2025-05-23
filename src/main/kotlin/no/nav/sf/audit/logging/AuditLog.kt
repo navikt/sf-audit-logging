@@ -18,7 +18,7 @@ class AuditLog(private val salesforceClient: SalesforceClient = DefaultSalesforc
         var totalNumberOfLoggedRecords = 0.0
         var totalNumberOfApiCalls = 0
 
-        val successfulLoggedForEventDate = postgresDatabase.fetchAuditLogSyncStatus(eventDate, true)
+        val successfulLoggedForEventDate = postgresDatabase.fetchAuditLogSyncStatus(eventDate)
         if (successfulLoggedForEventDate.isNotEmpty()) {
             // Stop if we have already logged audit logs for the event date
             log.warn { "Audit logs have already been logged for $eventDate" }
@@ -46,7 +46,7 @@ class AuditLog(private val salesforceClient: SalesforceClient = DefaultSalesforc
             }
         }
         if (totalNumberOfLoggedRecords> 0.0) {
-            postgresDatabase.upsertAuditLogSyncStatus(eventDate, LocalDate.now(), true, totalNumberOfLoggedRecords.toInt())
+            postgresDatabase.upsertAuditLogSyncStatus(eventDate, LocalDate.now(), totalNumberOfLoggedRecords.toInt())
         } else {
             log.warn { "No audit logs to log for $eventDate" }
         }

@@ -7,7 +7,6 @@ import no.nav.sf.audit.logging.Application
 import no.nav.sf.audit.logging.env
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -47,26 +46,24 @@ class DefaultPostgresDatabase : PostgresDatabase {
         }
     }
 
-    override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, success: Boolean, numberOfRecords: Int): AuditLogSyncStatus? {
-        log.info { "Store $eventDate $syncDate $success $numberOfRecords" }
+    override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, numberOfRecords: Int): AuditLogSyncStatus? {
+        log.info { "Store $eventDate $syncDate $numberOfRecords" }
         return transaction(database) {
             AuditLogSyncStatusTable.upsert(
-                keys = arrayOf(AuditLogSyncStatusTable.syncDate, AuditLogSyncStatusTable.success)
+                keys = arrayOf(AuditLogSyncStatusTable.syncDate)
             ) {
                 it[AuditLogSyncStatusTable.eventDate] = eventDate
                 it[AuditLogSyncStatusTable.syncDate] = syncDate
-                it[AuditLogSyncStatusTable.success] = success
                 it[AuditLogSyncStatusTable.numberOfRecords] = numberOfRecords
             }
         }.resultedValues?.firstOrNull()?.toAuditLogSyncStatus()
     }
 
-    override fun fetchAuditLogSyncStatus(eventDate: LocalDate, success: Boolean): List<AuditLogSyncStatus> {
+    override fun fetchAuditLogSyncStatus(eventDate: LocalDate): List<AuditLogSyncStatus> {
         return transaction(database) {
             AuditLogSyncStatusTable.selectAll()
                 .where {
-                    (AuditLogSyncStatusTable.eventDate eq eventDate) and
-                        (AuditLogSyncStatusTable.success eq success)
+                    (AuditLogSyncStatusTable.eventDate eq eventDate)
                 }
                 .map { it.toAuditLogSyncStatus() }
         }

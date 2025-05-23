@@ -5,7 +5,7 @@ import java.time.LocalDate
 interface PostgresDatabase {
     fun retrieveAuditLogSyncStatusesAsMap(): MutableMap<LocalDate, List<AuditLogSyncStatus>>
 
-    fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, success: Boolean, numberOfRecords: Int): AuditLogSyncStatus?
+    fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, numberOfRecords: Int): AuditLogSyncStatus?
 
-    fun fetchAuditLogSyncStatus(eventDate: LocalDate, success: Boolean): List<AuditLogSyncStatus>
+    fun fetchAuditLogSyncStatus(eventDate: LocalDate): List<AuditLogSyncStatus>
 }

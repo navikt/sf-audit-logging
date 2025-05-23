@@ -23,8 +23,8 @@ class AuditLogTest {
     @BeforeEach
     fun setup() {
         mockkObject(Metrics)
-        every { postgresDatabase.upsertAuditLogSyncStatus(any(), any(), any(), any()) }.returns(null)
-        every { postgresDatabase.fetchAuditLogSyncStatus(any(), any()) }.returns(emptyList())
+        every { postgresDatabase.upsertAuditLogSyncStatus(any(), any(), any()) }.returns(null)
+        every { postgresDatabase.fetchAuditLogSyncStatus(any()) }.returns(emptyList())
     }
 
     @Test
@@ -138,7 +138,7 @@ class AuditLogTest {
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
         classUnderTest.fetchAndLog(LocalDate.now())
-        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), true, 2) }
+        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), 2) }
     }
 
     @Test
@@ -151,12 +151,11 @@ class AuditLogTest {
         every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
 
         every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
-        every { postgresDatabase.fetchAuditLogSyncStatus(any(), any()) }.returns(
+        every { postgresDatabase.fetchAuditLogSyncStatus(any()) }.returns(
             listOf(
                 AuditLogSyncStatus(
                     eventDate = LocalDate.now().minusDays(1),
                     syncDate = LocalDate.now(),
-                    success = true,
                     numberOfRecords = 1
                 )
             )
