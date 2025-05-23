@@ -26,6 +26,7 @@ class DefaultPostgresDatabase : PostgresDatabase {
 
     private fun hikariConfig(): HikariConfig = HikariConfig().apply {
         jdbcUrl = dbJdbcUrl
+        driverClassName = "org.postgresql.Driver"
         minimumIdle = 1
         maxLifetime = 26000
         maximumPoolSize = 10
