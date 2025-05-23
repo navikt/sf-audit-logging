@@ -50,7 +50,7 @@ class DefaultPostgresDatabase : PostgresDatabase {
         log.info { "Store $eventDate $syncDate $numberOfRecords" }
         return transaction(database) {
             AuditLogSyncStatusTable.upsert(
-                keys = arrayOf(AuditLogSyncStatusTable.syncDate)
+                keys = arrayOf(AuditLogSyncStatusTable.eventDate)
             ) {
                 it[AuditLogSyncStatusTable.eventDate] = eventDate
                 it[AuditLogSyncStatusTable.syncDate] = syncDate
