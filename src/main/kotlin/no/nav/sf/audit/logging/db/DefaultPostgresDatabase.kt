@@ -48,6 +48,7 @@ class DefaultPostgresDatabase : PostgresDatabase {
     }
 
     override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, success: Boolean, numberOfRecords: Int): AuditLogSyncStatus? {
+        log.info { "Store $eventDate $syncDate $success $numberOfRecords" }
         return transaction(database) {
             AuditLogSyncStatusTable.upsert(
                 keys = arrayOf(AuditLogSyncStatusTable.syncDate, AuditLogSyncStatusTable.success)
