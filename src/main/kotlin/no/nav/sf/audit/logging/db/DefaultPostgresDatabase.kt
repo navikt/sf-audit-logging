@@ -6,8 +6,10 @@ import mu.KotlinLogging
 import no.nav.sf.audit.logging.Application
 import no.nav.sf.audit.logging.env
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.upsert
 import java.time.LocalDate
@@ -66,6 +68,21 @@ class DefaultPostgresDatabase : PostgresDatabase {
                         (AuditLogSyncStatusTable.success eq success)
                 }
                 .map { it.toAuditLogSyncStatus() }
+        }
+    }
+
+    fun createStatusTable(dropFirst: Boolean = false) {
+        transaction {
+            if (dropFirst) {
+                log.info { "Dropping table log_sync_status" }
+                val dropStatement =
+                    TransactionManager.current().connection.prepareStatement("DROP TABLE audit_log_status", false)
+                dropStatement.executeUpdate()
+                log.info { "Drop performed" }
+            }
+
+            log.info { "Creating table audit_log_status" }
+            SchemaUtils.create(AuditLogSyncStatusTable)
         }
     }
 }
