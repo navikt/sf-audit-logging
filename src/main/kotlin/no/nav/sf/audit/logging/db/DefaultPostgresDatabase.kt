@@ -16,7 +16,7 @@ const val NAIS_DB_PREFIX = "NAIS_DATABASE_SF_AUDIT_LOGGING_SF_AUDIT_LOGGING_"
 
 class DefaultPostgresDatabase : PostgresDatabase {
     private val log = KotlinLogging.logger { }
-    val dbJdbcUrl = env("${no.nav.sf.audit.logging.db.NAIS_DB_PREFIX}${Application.context}_JDBC_URL")
+    private val dbJdbcUrl = env("${no.nav.sf.audit.logging.db.NAIS_DB_PREFIX}${Application.context}_JDBC_URL")
     val database = try {
         Database.connect(HikariDataSource(hikariConfig()))
     } catch (e: Exception) {
@@ -26,7 +26,6 @@ class DefaultPostgresDatabase : PostgresDatabase {
 
     private fun hikariConfig(): HikariConfig = HikariConfig().apply {
         jdbcUrl = dbJdbcUrl
-        driverClassName = "org.postgresql.Driver"
         minimumIdle = 1
         maxLifetime = 26000
         maximumPoolSize = 10
