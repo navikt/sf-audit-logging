@@ -40,7 +40,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 <tr>
                     <th>Sync Date</th>
                     <th>Event Date</th>
-                    <th>Success</th>
                     <th>Number of Records</th>
                 </tr>
             </thead>
@@ -50,7 +49,6 @@ document.addEventListener("DOMContentLoaded", function () {
             <tr>
                 <td>${syncDate}</td>
                 <td>${record.eventDate}</td>
-                <td>${record.success}</td>
                 <td>${record.numberOfRecords}</td>
             </tr>
         `).join('')
