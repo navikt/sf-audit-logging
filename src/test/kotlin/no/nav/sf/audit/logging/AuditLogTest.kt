@@ -138,7 +138,7 @@ class AuditLogTest {
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
         classUnderTest.fetchAndLog(LocalDate.now())
-        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now().minusDays(1), LocalDate.now(), true, 2) }
+        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), true, 2) }
     }
 
     @Test

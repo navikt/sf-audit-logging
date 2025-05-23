@@ -45,7 +45,11 @@ class AuditLog(private val salesforceClient: SalesforceClient = DefaultSalesforc
                 Metrics.uriEventsWithoutAnyPersonIdents.labels(entity).inc(uriEventsWithoutAnyPersonIdents)
             }
         }
-        postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now().minusDays(1), LocalDate.now(), true, totalNumberOfLoggedRecords.toInt())
+        if (totalNumberOfLoggedRecords> 0.0) {
+            postgresDatabase.upsertAuditLogSyncStatus(eventDate, LocalDate.now(), true, totalNumberOfLoggedRecords.toInt())
+        } else {
+            log.warn { "No audit logs to log for $eventDate" }
+        }
         Metrics.numberOfApiCalls.labels("RequestPersonIdents").inc(totalNumberOfApiCalls.toDouble())
         return totalNumberOfLoggedRecords.toInt()
     }
