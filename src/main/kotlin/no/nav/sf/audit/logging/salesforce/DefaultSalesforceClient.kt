@@ -23,7 +23,6 @@ class DefaultSalesforceClient(
 
     override fun fetchUriEvents(eventDate: LocalDate): List<UriEvent> {
         val soqlQuery = "SELECT EventDate, Operation, QueriedEntities, RecordId, Username, UserType FROM LightningUriEvent WHERE " + dateRestrictionExtention(eventDate)
-        log.info { "Fetching $soqlQuery" }
         val encodedQuery = URLEncoder.encode(soqlQuery, "UTF-8")
         var done = false
         var nextRecordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
@@ -79,7 +78,6 @@ class DefaultSalesforceClient(
 
         distinctRecordIds.chunked(2000).forEach { currentRecordIdRange ->
             val soqlQuery = "SELECT Id, $personIdentSelectClause FROM $objectName WHERE Id IN (${currentRecordIdRange.joinToString(",") { "'$it'" }})"
-            log.info() { "SOQL query: $soqlQuery" }
             val encodedQuery = URLEncoder.encode(soqlQuery, "UTF-8")
             val recordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
 
