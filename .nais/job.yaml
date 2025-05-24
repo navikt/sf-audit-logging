@@ -6,7 +6,7 @@ metadata:
   labels:
     team: teamcrm
 spec:
-  schedule: "0 1 * * *"  # This will run the job every day at 01:00 AM UTC (02:00 AM CET)
+  schedule: "0 3 * * *"  # This will run the job every day at 03:00 AM UTC (04:00 AM CET)
   image: "{{ image }}" # Will use cgr.dev/chainguard/curl:latest via Dockerfile-job
   accessPolicy:
     outbound:
