@@ -36,7 +36,7 @@ class AuditLog(private val salesforceClient: SalesforceClient = DefaultSalesforc
             )
             totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls
             val (uriEventsWithPersonIdent, uriEventsWithoutAnyPersonIdents) = setUriEventsWithAndWithoutPersonIdent(events, personIdentsResponse)
-            totalNumberOfLoggedRecords += uriEventsWithPersonIdent
+            totalNumberOfLoggedRecords += uriEventsWithoutAnyPersonIdents
 
             if (uriEventsWithPersonIdent> 0) {
                 Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsWithPersonIdent)

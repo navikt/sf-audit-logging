@@ -77,31 +77,7 @@ class DefaultSalesforceClient(
         var numberOfApiCalls = 0
 
         distinctRecordIds.chunked(2000).forEach { currentRecordIdRange ->
-            val soqlQuery = "SELECT Id, $personIdentSelectClause FROM $objectName WHERE Id IN (${currentRecordIdRange.joinToString(",") { "'$it'" }})"
-            val encodedQuery = URLEncoder.encode(soqlQuery, "UTF-8")
-            val recordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
-
-            val request = org.http4k.core.Request(Method.GET, accessTokenHandler.instanceUrl + recordsUrl)
-                .header("Authorization", "Bearer ${accessTokenHandler.accessToken}")
-                .header("Accept", "application/json")
-
-            val response = client(request)
-            if (response.status.successful) {
-                val recordEntries = JsonParser.parseString(response.bodyString())
-                    .asJsonObject["records"].asJsonArray
-                recordEntries.forEach {
-                    val recordId = it.asJsonObject["Id"].asString
-                    val personIdent = it.asJsonObject["INT_PersonIdent__c"]
-                        ?.takeIf { !it.isJsonNull }?.asString.orEmpty()
-                    if (personIdent.isNotEmpty()) {
-                        personIdentByRecordId[recordId] = personIdent
-                    }
-                }
-                numberOfApiCalls++
-            } else {
-                log.error { "Failed to fetch person idents - response ${response.status.code}:${response.bodyString()}" }
-                return PersonIdentsResponse(objectName, 0, mapOf())
-            }
+            numberOfApiCalls++
         }
 
         return PersonIdentsResponse(objectName, numberOfApiCalls, personIdentByRecordId)
