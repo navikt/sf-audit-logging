@@ -29,7 +29,7 @@ class DefaultSalesforceClient(
 
         var result = mutableListOf<UriEvent>()
         var totalSize = 0
-
+        log.info("Fetched $totalSize URI events for date $eventDate")
         while (!done) {
             val request = org.http4k.core.Request(Method.GET, accessTokenHandler.instanceUrl + nextRecordsUrl)
                 .header("Authorization", "Bearer ${accessTokenHandler.accessToken}")
