@@ -23,6 +23,7 @@ class DefaultSalesforceClient(
 
     override fun fetchUriEvents(eventDate: LocalDate): List<UriEvent> {
         val soqlQuery = "SELECT EventDate, Operation, QueriedEntities, RecordId, Username, UserType FROM LightningUriEvent WHERE " + dateRestrictionExtention(eventDate)
+        log.info { "Fetching $soqlQuery" }
         val encodedQuery = URLEncoder.encode(soqlQuery, "UTF-8")
         var done = false
         var nextRecordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
@@ -30,6 +31,7 @@ class DefaultSalesforceClient(
         var result = mutableListOf<UriEvent>()
         var totalSize = 0
         log.info("Fetched $totalSize URI events for date $eventDate")
+
         while (!done) {
             val request = org.http4k.core.Request(Method.GET, accessTokenHandler.instanceUrl + nextRecordsUrl)
                 .header("Authorization", "Bearer ${accessTokenHandler.accessToken}")
@@ -37,6 +39,8 @@ class DefaultSalesforceClient(
             try {
 
                 val response = client(request)
+                val responseBody = response.bodyString()
+                log.info { "Response $responseBody" }
                 if (response.status.successful) {
                     val obj = JsonParser.parseString(response.bodyString()).asJsonObject
                     val recordEntries = obj["records"].asJsonArray
