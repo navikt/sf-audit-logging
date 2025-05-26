@@ -27,7 +27,6 @@ class AuditLog(private val salesforceClient: SalesforceClient = DefaultSalesforc
         log.info { "Fetch and log audit logs for $eventDate" }
         Metrics.clearUriEventsCounter()
         val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents(eventDate))
-        log.info { "Number of feltered events ${filteredUriEvents.size}" }
 
         filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
             val personIdentsResponse = salesforceClient.fetchPersonIdents(
@@ -37,7 +36,7 @@ class AuditLog(private val salesforceClient: SalesforceClient = DefaultSalesforc
             )
             totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls
             val (uriEventsWithPersonIdent, uriEventsWithoutAnyPersonIdents) = setUriEventsWithAndWithoutPersonIdent(events, personIdentsResponse)
-            totalNumberOfLoggedRecords += uriEventsWithoutAnyPersonIdents
+            totalNumberOfLoggedRecords += uriEventsWithPersonIdent
 
             if (uriEventsWithPersonIdent> 0) {
                 Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsWithPersonIdent)
@@ -49,7 +48,7 @@ class AuditLog(private val salesforceClient: SalesforceClient = DefaultSalesforc
         if (totalNumberOfLoggedRecords> 0.0) {
             postgresDatabase.upsertAuditLogSyncStatus(eventDate, LocalDate.now(), totalNumberOfLoggedRecords.toInt())
         } else {
-            log.warn { "No audit logs for $eventDate" }
+            log.warn { "No audit logs to log for $eventDate" }
         }
         Metrics.numberOfApiCalls.labels("RequestPersonIdents").inc(totalNumberOfApiCalls.toDouble())
         return totalNumberOfLoggedRecords.toInt()
