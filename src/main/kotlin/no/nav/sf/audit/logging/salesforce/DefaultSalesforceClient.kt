@@ -46,6 +46,7 @@ class DefaultSalesforceClient(
                 val recordEntries = obj["records"].asJsonArray
                 result.addAll(
                     recordEntries.map {
+                        val record = it.asJsonObject
                         UriEvent(
                             record["EventDate"]?.takeIf { !it.isJsonNull }?.asString ?: "",
                             record["QueriedEntities"]?.takeIf { !it.isJsonNull }?.asString ?: "",
