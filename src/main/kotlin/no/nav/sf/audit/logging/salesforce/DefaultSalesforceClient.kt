@@ -35,36 +35,31 @@ class DefaultSalesforceClient(
             val request = org.http4k.core.Request(Method.GET, accessTokenHandler.instanceUrl + nextRecordsUrl)
                 .header("Authorization", "Bearer ${accessTokenHandler.accessToken}")
                 .header("Accept", "application/json")
-            try {
 
-                val response = client(request)
+            val response = client(request)
 
-                val responseBody = response.bodyString().takeIf { it.isNotEmpty() } ?: "No body in response"
-                log.info { "Response status " + response.status }
-                log.info { "Response  body " + responseBody }
-                if (response.status.successful) {
-                    val obj = JsonParser.parseString(response.bodyString()).asJsonObject
-                    val recordEntries = obj["records"].asJsonArray
-                    result.addAll(
-                        recordEntries.map {
-                            UriEvent(
-                                it.asJsonObject["EventDate"].asString,
-                                it.asJsonObject["QueriedEntities"].asString,
-                                it.asJsonObject["RecordId"].asString,
-                                it.asJsonObject["Operation"].asString,
-                                it.asJsonObject["Username"].asString
-                            )
-                        }
-                    )
-                    totalSize = obj["totalSize"].asInt
-                    done = obj["done"].asBoolean
-                    if (!done) nextRecordsUrl = obj["nextRecordsUrl"].asString
-                } else {
-                    log.error { "Failed to fetch URI events - response ${response.status.code}:${response.bodyString()}" }
-                    done = true
-                }
-            } catch (e: Exception) {
-                log.error { "Exception while fetching URI events: ${e.message}" }
+            val responseBody = response.bodyString().takeIf { it.isNotEmpty() } ?: "No body in response"
+            log.info { "Response status " + response.status }
+            log.info { "Response  body " + responseBody }
+            if (response.status.successful) {
+                val obj = JsonParser.parseString(response.bodyString()).asJsonObject
+                val recordEntries = obj["records"].asJsonArray
+                result.addAll(
+                    recordEntries.map {
+                        UriEvent(
+                            it.asJsonObject["EventDate"].asString,
+                            it.asJsonObject["QueriedEntities"].asString,
+                            it.asJsonObject["RecordId"].asString,
+                            it.asJsonObject["Operation"].asString,
+                            it.asJsonObject["Username"].asString
+                        )
+                    }
+                )
+                totalSize = obj["totalSize"].asInt
+                done = obj["done"].asBoolean
+                if (!done) nextRecordsUrl = obj["nextRecordsUrl"].asString
+            } else {
+                log.error { "Failed to fetch URI events - response ${response.status.code}:${response.bodyString()}" }
                 done = true
             }
         }
