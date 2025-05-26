@@ -30,7 +30,6 @@ class DefaultSalesforceClient(
 
         var result = mutableListOf<UriEvent>()
         var totalSize = 0
-        log.info("Fetched $totalSize URI events for date $eventDate")
 
         while (!done) {
             val request = org.http4k.core.Request(Method.GET, accessTokenHandler.instanceUrl + nextRecordsUrl)
@@ -39,8 +38,9 @@ class DefaultSalesforceClient(
             try {
 
                 val response = client(request)
-                val responseBody = response.bodyString()
-                log.info { "Response $responseBody" }
+
+                log.info { "Response status " + response.status }
+                log.info { "Response  body " + response.body }
                 if (response.status.successful) {
                     val obj = JsonParser.parseString(response.bodyString()).asJsonObject
                     val recordEntries = obj["records"].asJsonArray
