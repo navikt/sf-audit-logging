@@ -23,7 +23,6 @@ class DefaultSalesforceClient(
 
     override fun fetchUriEvents(eventDate: LocalDate): List<UriEvent> {
         val soqlQuery = "SELECT EventDate, Operation, QueriedEntities, RecordId, Username, UserType FROM LightningUriEvent WHERE " + dateRestrictionExtention(eventDate)
-        log.info { "Fetching $soqlQuery" }
         val encodedQuery = URLEncoder.encode(soqlQuery, "UTF-8")
         var done = false
         var nextRecordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
@@ -35,32 +34,33 @@ class DefaultSalesforceClient(
             val request = org.http4k.core.Request(Method.GET, accessTokenHandler.instanceUrl + nextRecordsUrl)
                 .header("Authorization", "Bearer ${accessTokenHandler.accessToken}")
                 .header("Accept", "application/json")
+            try {
 
-            val response = client(request)
-
-            val responseBody = response.bodyString().takeIf { it.isNotEmpty() } ?: "No body in response"
-            log.info { "Response status " + response.status }
-            log.info { "Response  body " + responseBody }
-            if (response.status.successful) {
-                val obj = JsonParser.parseString(response.bodyString()).asJsonObject
-                val recordEntries = obj["records"].asJsonArray
-                result.addAll(
-                    recordEntries.map {
-                        val record = it.asJsonObject
-                        UriEvent(
-                            record["EventDate"]?.takeIf { !it.isJsonNull }?.asString ?: "",
-                            record["QueriedEntities"]?.takeIf { !it.isJsonNull }?.asString ?: "",
-                            record["RecordId"]?.takeIf { !it.isJsonNull }?.asString ?: "",
-                            record["Operation"]?.takeIf { !it.isJsonNull }?.asString ?: "",
-                            record["Username"]?.takeIf { !it.isJsonNull }?.asString ?: ""
-                        )
-                    }
-                )
-                totalSize = obj["totalSize"].asInt
-                done = obj["done"].asBoolean
-                if (!done) nextRecordsUrl = obj["nextRecordsUrl"].asString
-            } else {
-                log.error { "Failed to fetch URI events - response ${response.status.code}:${response.bodyString()}" }
+                val response = client(request)
+                if (response.status.successful) {
+                    val obj = JsonParser.parseString(response.bodyString()).asJsonObject
+                    val recordEntries = obj["records"].asJsonArray
+                    result.addAll(
+                        recordEntries.map {
+                            val record = it.asJsonObject
+                            UriEvent(
+                                record["EventDate"]?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                record["QueriedEntities"]?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                record["RecordId"]?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                record["Operation"]?.takeIf { !it.isJsonNull }?.asString ?: "",
+                                record["Username"]?.takeIf { !it.isJsonNull }?.asString ?: ""
+                            )
+                        }
+                    )
+                    totalSize = obj["totalSize"].asInt
+                    done = obj["done"].asBoolean
+                    if (!done) nextRecordsUrl = obj["nextRecordsUrl"].asString
+                } else {
+                    log.error { "Failed to fetch URI events - response ${response.status.code}:${response.bodyString()}" }
+                    done = true
+                }
+            } catch (e: Exception) {
+                log.error { "Exception while fetching URI events: ${e.message}" }
                 done = true
             }
         }
@@ -78,7 +78,31 @@ class DefaultSalesforceClient(
         var numberOfApiCalls = 0
 
         distinctRecordIds.chunked(2000).forEach { currentRecordIdRange ->
-            numberOfApiCalls++
+            val soqlQuery = "SELECT Id, $personIdentSelectClause FROM $objectName WHERE Id IN (${currentRecordIdRange.joinToString(",") { "'$it'" }})"
+            val encodedQuery = URLEncoder.encode(soqlQuery, "UTF-8")
+            val recordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
+
+            val request = org.http4k.core.Request(Method.GET, accessTokenHandler.instanceUrl + recordsUrl)
+                .header("Authorization", "Bearer ${accessTokenHandler.accessToken}")
+                .header("Accept", "application/json")
+
+            val response = client(request)
+            if (response.status.successful) {
+                val recordEntries = JsonParser.parseString(response.bodyString())
+                    .asJsonObject["records"].asJsonArray
+                recordEntries.forEach {
+                    val recordId = it.asJsonObject["Id"].asString
+                    val personIdent = it.asJsonObject["INT_PersonIdent__c"]
+                        ?.takeIf { !it.isJsonNull }?.asString.orEmpty()
+                    if (personIdent.isNotEmpty()) {
+                        personIdentByRecordId[recordId] = personIdent
+                    }
+                }
+                numberOfApiCalls++
+            } else {
+                log.error { "Failed to fetch person idents - response ${response.status.code}:${response.bodyString()}" }
+                return PersonIdentsResponse(objectName, 0, mapOf())
+            }
         }
 
         return PersonIdentsResponse(objectName, numberOfApiCalls, personIdentByRecordId)

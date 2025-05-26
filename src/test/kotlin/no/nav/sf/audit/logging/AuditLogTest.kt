@@ -28,6 +28,28 @@ class AuditLogTest {
     }
 
     @Test
+    fun `Should store two uri logs for account in Metrics`() {
+        val mockCounterChild = mockk<Counter.Child>(relaxed = true)
+        every { Metrics.uriEventsWithPersonIdent.labels("Account") } returns mockCounterChild
+
+        val uriEvents = TestDataFactory.getUriEvents(2)
+        every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
+
+        val personIdentByRecordId = mapOf(
+            "1" to "12345678901",
+            "2" to "12345678902"
+        )
+        val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
+        every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
+
+        val result = classUnderTest.fetchAndLog(LocalDate.now())
+        assertEquals(uriEvents.size, result)
+
+        verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
+        verify(exactly = 1) { mockCounterChild.inc(uriEvents.size.toDouble()) }
+    }
+
+    @Test
     fun `Should store one uri log for account in Metrics when only one has a person ident`() {
 
         val mockCounterChild = mockk<Counter.Child>(relaxed = true)
@@ -47,6 +69,76 @@ class AuditLogTest {
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
         verify(exactly = 1) { mockCounterChild.inc(1.0) }
+    }
+
+    @Test
+    fun `Should log both events when the events have same record ID`() {
+        var uriEventsWithSameRecordId = TestDataFactory.getUriEvents(1)
+        uriEventsWithSameRecordId.add(TestDataFactory.getUriEvents(1).first())
+
+        val mockCounterChild = mockk<Counter.Child>(relaxed = true)
+        every { Metrics.uriEventsWithPersonIdent.labels("Account") } returns mockCounterChild
+
+        every { salesforceClient.fetchUriEvents(any()) }.returns(uriEventsWithSameRecordId)
+
+        val personIdentByRecordId = mapOf(
+            "1" to "12345678901"
+        )
+        val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
+        every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
+
+        val result = classUnderTest.fetchAndLog(LocalDate.now())
+        assertEquals(2, result)
+
+        verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
+        verify(exactly = 1) { mockCounterChild.inc(2.0) }
+    }
+
+    @Test
+    fun `Should log metric for uri events without any person ident`() {
+        val uriEvents = TestDataFactory.getUriEvents(1)
+
+        val mockCounterChild = mockk<Counter.Child>(relaxed = true)
+        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
+        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
+        every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
+
+        every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
+
+        // no matching person idents
+        val personIdentByRecordId = mapOf(
+            "99" to "12345678901"
+        )
+        val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
+        every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
+
+        val result = classUnderTest.fetchAndLog(LocalDate.now())
+        assertEquals(0, result)
+
+        verify(exactly = 1) { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") }
+        verify { mockCounterChild.inc(1.0) }
+    }
+
+    @Test
+    fun `Should create one audit log record as succeded in postgres`() {
+        val uriEvents = TestDataFactory.getUriEvents(2)
+
+        val mockCounterChild = mockk<Counter.Child>(relaxed = true)
+        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
+        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
+        every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
+
+        every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
+
+        val personIdentByRecordId = mapOf(
+            "1" to "12345678901",
+            "2" to "12345678902"
+        )
+        val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
+        every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
+
+        classUnderTest.fetchAndLog(LocalDate.now())
+        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), 2) }
     }
 
     @Test
