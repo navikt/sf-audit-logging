@@ -32,7 +32,8 @@ object Application {
         "/internal/guiLabel" bind Method.GET to { Response(OK).body(context) },
         "/internal/metadata" bind Method.GET to metaDataHandler,
         "/internal/fetchAndLog" bind Method.GET to auditLogHandler,
-        "internal/clearDb" bind Method.GET to clearDbHandler
+        "/internal/clearDb" bind Method.GET to clearDbHandler,
+        "/internal/initDb" bind Method.GET to initDbHandler
     )
 
     fun start() {
@@ -54,6 +55,12 @@ object Application {
     private val clearDbHandler: HttpHandler = {
         val postgresDatabase = DefaultPostgresDatabase()
         postgresDatabase.createStatusTable(true)
+        Response(OK).body("Table recreated")
+    }
+
+    private val initDbHandler: HttpHandler = {
+        val postgresDatabase = DefaultPostgresDatabase()
+        postgresDatabase.createStatusTable(false)
         Response(OK).body("Table created")
     }
 }
