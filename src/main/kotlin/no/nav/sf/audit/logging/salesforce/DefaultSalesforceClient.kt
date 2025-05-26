@@ -39,8 +39,9 @@ class DefaultSalesforceClient(
 
                 val response = client(request)
 
+                val responseBody = response.bodyString().takeIf { it.isNotEmpty() } ?: "No body in response"
                 log.info { "Response status " + response.status }
-                log.info { "Response  body " + response.body }
+                log.info { "Response  body " + responseBody }
                 if (response.status.successful) {
                     val obj = JsonParser.parseString(response.bodyString()).asJsonObject
                     val recordEntries = obj["records"].asJsonArray
