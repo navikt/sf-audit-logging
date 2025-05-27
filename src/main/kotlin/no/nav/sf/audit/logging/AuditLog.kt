@@ -27,7 +27,7 @@ class AuditLog(private val salesforceClient: SalesforceClient = DefaultSalesforc
         log.info { "Fetch and log audit logs for $eventDate" }
         Metrics.clearUriEventsCounter()
         val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents(eventDate))
-
+        log.info { "Filtered ${filteredUriEvents.size} URI events" }
         filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
             val personIdentsResponse = salesforceClient.fetchPersonIdents(
                 objectName = entity,
