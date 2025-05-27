@@ -79,7 +79,7 @@ class DefaultSalesforceClient(
 
         distinctRecordIds.chunked(2000).forEach { currentRecordIdRange ->
             val soqlQuery = "SELECT Id, $personIdentSelectClause FROM $objectName WHERE Id IN (${currentRecordIdRange.joinToString(",") { "'$it'" }})"
-            log.info { "Get person idents $soqlQuery" }
+
             val encodedQuery = URLEncoder.encode(soqlQuery, "UTF-8")
             val recordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
 
@@ -102,6 +102,7 @@ class DefaultSalesforceClient(
                 numberOfApiCalls++
             } else {
                 log.error { "Failed to fetch person idents - response ${response.status.code}:${response.bodyString()}" }
+                log.info { "Soql query $soqlQuery" }
                 return PersonIdentsResponse(objectName, 0, mapOf())
             }
         }
