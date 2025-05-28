@@ -24,6 +24,7 @@ class DefaultSalesforceClient(
 
     override fun fetchUriEvents(eventDate: LocalDate): List<UriEvent> {
         val soqlQuery = "SELECT EventDate, Operation, QueriedEntities, RecordId, Username, UserType FROM LightningUriEvent WHERE " + dateRestrictionExtention(eventDate)
+        log.info("SOQL Query: $soqlQuery")
         val encodedQuery = URLEncoder.encode(soqlQuery, "UTF-8")
         var done = false
         var nextRecordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
@@ -80,12 +81,12 @@ class DefaultSalesforceClient(
 
         distinctRecordIds.chunked(5000).forEach { currentRecordIdRange ->
             val endpointUrl = "/services/apexrest/audit-logging/person-idents"
-
+            log.info("Fetching person idents for ${currentRecordIdRange.size} records in object $objectName with select clause $personIdentSelectClause")
             val request = org.http4k.core.Request(Method.POST, accessTokenHandler.instanceUrl + endpointUrl)
                 .header("Authorization", "Bearer ${accessTokenHandler.accessToken}")
                 .header("Accept", "application/json")
                 .body(Application.gson.toJson(PersonIdentsRequest(objectName, personIdentSelectClause, currentRecordIdRange)))
-
+            log.info(request.body.toString())
             val response = client(request)
             if (response.status.successful) {
                 val recordEntries = JsonParser.parseString(response.bodyString()).asJsonArray
