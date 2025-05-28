@@ -2,6 +2,7 @@ package no.nav.sf.audit.logging.salesforce
 
 import com.google.gson.JsonParser
 import mu.KotlinLogging
+import no.nav.sf.audit.logging.Application
 import no.nav.sf.audit.logging.config_SALESFORCE_API_VERSION
 import no.nav.sf.audit.logging.env
 import no.nav.sf.audit.logging.token.AccessTokenHandler
@@ -77,23 +78,20 @@ class DefaultSalesforceClient(
         val personIdentByRecordId = mutableMapOf<String, String>()
         var numberOfApiCalls = 0
 
-        distinctRecordIds.chunked(2000).forEach { currentRecordIdRange ->
-            val soqlQuery = "SELECT Id, $personIdentSelectClause FROM $objectName WHERE Id IN (${currentRecordIdRange.joinToString(",") { "'$it'" }})"
+        distinctRecordIds.chunked(5000).forEach { currentRecordIdRange ->
+            val endpointUrl = "/services/apexrest/audit-logging/person-idents"
 
-            val encodedQuery = URLEncoder.encode(soqlQuery, "UTF-8")
-            val recordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
-
-            val request = org.http4k.core.Request(Method.GET, accessTokenHandler.instanceUrl + recordsUrl)
+            val request = org.http4k.core.Request(Method.POST, accessTokenHandler.instanceUrl + endpointUrl)
                 .header("Authorization", "Bearer ${accessTokenHandler.accessToken}")
                 .header("Accept", "application/json")
+                .body(Application.gson.toJson(PersonIdentsRequest(objectName, personIdentSelectClause, currentRecordIdRange)))
 
             val response = client(request)
             if (response.status.successful) {
-                val recordEntries = JsonParser.parseString(response.bodyString())
-                    .asJsonObject["records"].asJsonArray
+                val recordEntries = JsonParser.parseString(response.bodyString()).asJsonArray
                 recordEntries.forEach {
-                    val recordId = it.asJsonObject["Id"].asString
-                    val personIdent = it.asJsonObject["INT_PersonIdent__c"]
+                    val recordId = it.asJsonObject["recordId"].asString
+                    val personIdent = it.asJsonObject["personIdent"]
                         ?.takeIf { !it.isJsonNull }?.asString.orEmpty()
                     if (personIdent.isNotEmpty()) {
                         personIdentByRecordId[recordId] = personIdent
@@ -102,7 +100,6 @@ class DefaultSalesforceClient(
                 numberOfApiCalls++
             } else {
                 log.error { "Failed to fetch person idents - response ${response.status.code}:${response.bodyString()}" }
-                log.info { "Soql query $soqlQuery" }
                 return PersonIdentsResponse(objectName, 0, mapOf())
             }
         }
