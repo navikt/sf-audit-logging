@@ -62,6 +62,9 @@ class AuditLog(private val salesforceClient: SalesforceClient = DefaultSalesforc
             if (personIdent != null) {
                 event.personIdent = personIdent
                 uriEventsWithPersonIdent += 1.0
+                if (Application.context == "DEV") {
+                    log.info(createLogMessage(event))
+                }
             } else {
                 uriEventsWithoutAnyPersonIdents += 1.0
             }
