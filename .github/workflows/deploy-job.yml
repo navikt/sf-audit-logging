@@ -34,4 +34,18 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: .nais/job.yaml
           VAR: image=${{ needs.build.outputs.image }}
+  deploy-prod:
+    name: Deploy job to prod-gcp
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/job.yaml
+          VAR: image=${{ needs.build.outputs.image }}
   
