@@ -37,6 +37,9 @@ spec:
   ingresses:
     - "https://sf-audit-logging.intern.nav.no"
   accessPolicy:
+    inbound:
+      rules:
+        - application: audit-logging-fetch-and-log-job
     outbound:
       external:
         - host: navdialog.my.salesforce.com
