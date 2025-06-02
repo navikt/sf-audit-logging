@@ -24,4 +24,13 @@ class MockPostgresDatabase : PostgresDatabase {
             AuditLogSyncStatus(eventDate, LocalDate.now(), "Account", 10)
         )
     }
+
+    override fun fetchAuditLogSyncStatusBySalesforceObject(
+        eventDate: LocalDate,
+        salesforceObject: String
+    ): List<AuditLogSyncStatus> {
+        return listOf(
+            AuditLogSyncStatus(eventDate, LocalDate.now(), salesforceObject, 5)
+        )
+    }
 }

@@ -8,4 +8,6 @@ interface PostgresDatabase {
     fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, salesforceObject: String, numberOfRecords: Int): AuditLogSyncStatus?
 
     fun fetchAuditLogSyncStatus(eventDate: LocalDate): List<AuditLogSyncStatus>
+
+    fun fetchAuditLogSyncStatusBySalesforceObject(eventDate: LocalDate, salesforceObject: String): List<AuditLogSyncStatus>
 }
