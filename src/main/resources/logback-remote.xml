@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <appender name="AuditLogger" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>audit.nais:6514</destination>
+        <writeBufferSize>128000</writeBufferSize>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${HOSTNAME} sf-audit: %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="AuditLogger" level="${NAUDIT_LOG_LEVEL:-INFO}" additivity="false">
+        <appender-ref ref="AuditLogger"/>
+    </logger>
+
     <appender name="stdout_json" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
     </appender>
