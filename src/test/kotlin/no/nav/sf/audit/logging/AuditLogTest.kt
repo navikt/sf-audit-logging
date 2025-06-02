@@ -23,7 +23,7 @@ class AuditLogTest {
     @BeforeEach
     fun setup() {
         mockkObject(Metrics)
-        every { postgresDatabase.upsertAuditLogSyncStatus(any(), any(), any()) }.returns(null)
+        every { postgresDatabase.upsertAuditLogSyncStatus(any(), any(), any(), any()) }.returns(null)
         every { postgresDatabase.fetchAuditLogSyncStatus(any()) }.returns(emptyList())
     }
 
@@ -138,7 +138,7 @@ class AuditLogTest {
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
         classUnderTest.fetchAndLog(LocalDate.now())
-        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), 2) }
+        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 2) }
     }
 
     @Test
@@ -156,6 +156,7 @@ class AuditLogTest {
                 AuditLogSyncStatus(
                     eventDate = LocalDate.now().minusDays(1),
                     syncDate = LocalDate.now(),
+                    salesforceObject = "Account",
                     numberOfRecords = 1
                 )
             )

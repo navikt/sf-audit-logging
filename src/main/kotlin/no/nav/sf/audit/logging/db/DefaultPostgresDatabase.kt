@@ -46,13 +46,14 @@ class DefaultPostgresDatabase : PostgresDatabase {
         }
     }
 
-    override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, numberOfRecords: Int): AuditLogSyncStatus? {
+    override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, salesforceObject: String, numberOfRecords: Int): AuditLogSyncStatus? {
         return transaction(database) {
             AuditLogSyncStatusTable.upsert(
-                keys = arrayOf(AuditLogSyncStatusTable.eventDate)
+                keys = arrayOf(AuditLogSyncStatusTable.eventDate, AuditLogSyncStatusTable.salesforceObject)
             ) {
                 it[AuditLogSyncStatusTable.eventDate] = eventDate
                 it[AuditLogSyncStatusTable.syncDate] = syncDate
+                it[AuditLogSyncStatusTable.salesforceObject] = salesforceObject
                 it[AuditLogSyncStatusTable.numberOfRecords] = numberOfRecords
             }
         }.resultedValues?.firstOrNull()?.toAuditLogSyncStatus()

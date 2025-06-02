@@ -46,7 +46,7 @@ class AuditLog(private val salesforceClient: SalesforceClient = DefaultSalesforc
             }
         }
         if (totalNumberOfLoggedRecords> 0.0) {
-            postgresDatabase.upsertAuditLogSyncStatus(eventDate, LocalDate.now(), totalNumberOfLoggedRecords.toInt())
+            postgresDatabase.upsertAuditLogSyncStatus(eventDate, LocalDate.now(), "Account", totalNumberOfLoggedRecords.toInt())
         } else {
             log.warn { "No audit logs to log for $eventDate" }
         }

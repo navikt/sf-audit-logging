@@ -11,25 +11,32 @@ import java.time.LocalDateTime
 data class AuditLogSyncStatus(
     val eventDate: LocalDate,
     val syncDate: LocalDate,
+    val salesforceObject: String,
     val numberOfRecords: Int
 )
 
 object AuditLogSyncStatusTable : Table("audit_log_status") {
-    val eventDate = date("event_date").uniqueIndex()
+    val eventDate = date("event_date")
     val syncDate = date("sync_date")
+    val salesforceObject = varchar("salesforce_object", 43)
     val numberOfRecords = integer("number_of_records")
+
+    init {
+        uniqueIndex(eventDate, salesforceObject) // Enforces unique combinations of eventDate and Salesforce Object
+    }
 }
 
 fun ResultRow.toAuditLogSyncStatus() = AuditLogSyncStatus(
     eventDate = this[AuditLogSyncStatusTable.eventDate],
     syncDate = this[AuditLogSyncStatusTable.syncDate],
+    salesforceObject = this[AuditLogSyncStatusTable.salesforceObject],
     numberOfRecords = this[AuditLogSyncStatusTable.numberOfRecords]
 )
 fun getMetaData(postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()): String {
-    val AuditLogSyncStatuses = postgresDatabase.retrieveAuditLogSyncStatusesAsMap()
+    val auditLogSyncStatuses = postgresDatabase.retrieveAuditLogSyncStatusesAsMap()
     val now = LocalDateTime.now()
     val last30Days = now.minusDays(30).toLocalDate()
 
-    val filteredAuditLogSyncStatuses = AuditLogSyncStatuses.filterKeys { it.isAfter(last30Days) }
+    val filteredAuditLogSyncStatuses = auditLogSyncStatuses.filterKeys { it.isAfter(last30Days) }
     return Application.gson.toJson(filteredAuditLogSyncStatuses.toSortedMap(compareByDescending { it }))
 }
