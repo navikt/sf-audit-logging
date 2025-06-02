@@ -47,14 +47,14 @@ class DefaultPostgresDatabase : PostgresDatabase {
         }
     }
 
-    override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, salesforceObject: String, numberOfRecords: Int): AuditLogSyncStatus? {
+    override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, entity: String, numberOfRecords: Int): AuditLogSyncStatus? {
         return transaction(database) {
             AuditLogSyncStatusTable.upsert(
-                keys = arrayOf(AuditLogSyncStatusTable.eventDate, AuditLogSyncStatusTable.salesforceObject)
+                keys = arrayOf(AuditLogSyncStatusTable.eventDate, AuditLogSyncStatusTable.entity)
             ) {
                 it[AuditLogSyncStatusTable.eventDate] = eventDate
                 it[AuditLogSyncStatusTable.syncDate] = syncDate
-                it[AuditLogSyncStatusTable.salesforceObject] = salesforceObject
+                it[AuditLogSyncStatusTable.entity] = entity
                 it[AuditLogSyncStatusTable.numberOfRecords] = numberOfRecords
             }
         }.resultedValues?.firstOrNull()?.toAuditLogSyncStatus()
@@ -70,14 +70,14 @@ class DefaultPostgresDatabase : PostgresDatabase {
         }
     }
 
-    override fun fetchAuditLogSyncStatusBySalesforceObject(
+    override fun fetchAuditLogSyncStatusByEntity(
         eventDate: LocalDate,
-        salesforceObject: String
+        entity: String
     ): List<AuditLogSyncStatus> {
         return transaction(database) {
             AuditLogSyncStatusTable.selectAll()
                 .where {
-                    (AuditLogSyncStatusTable.eventDate eq eventDate) and (AuditLogSyncStatusTable.salesforceObject eq salesforceObject)
+                    (AuditLogSyncStatusTable.eventDate eq eventDate) and (AuditLogSyncStatusTable.entity eq entity)
                 }
                 .map { it.toAuditLogSyncStatus() }
         }

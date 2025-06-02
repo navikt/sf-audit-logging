@@ -15,7 +15,7 @@ class MockPostgresDatabase : PostgresDatabase {
             .toMutableMap()
     }
 
-    override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, salesforceObject: String, numberOfRecords: Int): AuditLogSyncStatus? {
+    override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, entity: String, numberOfRecords: Int): AuditLogSyncStatus? {
         return null
     }
 
@@ -25,12 +25,12 @@ class MockPostgresDatabase : PostgresDatabase {
         )
     }
 
-    override fun fetchAuditLogSyncStatusBySalesforceObject(
+    override fun fetchAuditLogSyncStatusByEntity(
         eventDate: LocalDate,
-        salesforceObject: String
+        entity: String
     ): List<AuditLogSyncStatus> {
         return listOf(
-            AuditLogSyncStatus(eventDate, LocalDate.now(), salesforceObject, 5)
+            AuditLogSyncStatus(eventDate, LocalDate.now(), entity, 5)
         )
     }
 }

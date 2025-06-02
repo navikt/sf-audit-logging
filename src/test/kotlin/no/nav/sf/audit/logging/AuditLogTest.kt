@@ -156,7 +156,7 @@ class AuditLogTest {
                 AuditLogSyncStatus(
                     eventDate = LocalDate.now().minusDays(1),
                     syncDate = LocalDate.now(),
-                    salesforceObject = "Account",
+                    entity = "Account",
                     numberOfRecords = 1
                 )
             )

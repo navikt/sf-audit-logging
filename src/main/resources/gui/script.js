@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <tr>
                 <td>${syncDate}</td>
                 <td>${record.eventDate}</td>
-                <td>${record.salesforceObject}</td>
+                <td>${record.entity}</td>
                 <td>${record.numberOfRecords}</td>
             </tr>
         `).join('')
