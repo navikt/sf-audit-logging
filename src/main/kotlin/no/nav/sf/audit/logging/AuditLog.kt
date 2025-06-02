@@ -14,7 +14,7 @@ class AuditLog(private val salesforceClient: SalesforceClient = DefaultSalesforc
     private val objectFilter = ObjectFilter()
     private val log = KotlinLogging.logger { }
 
-    fun fetchAndLog(eventDate: LocalDate): Int {
+    fun fetchAndLog(eventDate: LocalDate, entity: String): Int {
         var totalNumberOfLoggedRecords = 0
         var totalNumberOfApiCalls = 0
 
