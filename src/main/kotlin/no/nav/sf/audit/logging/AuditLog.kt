@@ -15,7 +15,7 @@ class AuditLog(private val salesforceClient: SalesforceClient = DefaultSalesforc
     private val log = KotlinLogging.logger { }
 
     fun fetchAndLog(eventDate: LocalDate): Int {
-        var totalNumberOfLoggedRecords = 0.0
+        var totalNumberOfLoggedRecords = 0
         var totalNumberOfApiCalls = 0
 
         val successfulLoggedForEventDate = postgresDatabase.fetchAuditLogSyncStatus(eventDate)
@@ -36,18 +36,17 @@ class AuditLog(private val salesforceClient: SalesforceClient = DefaultSalesforc
             )
             totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls
             val (uriEventsWithPersonIdent, uriEventsWithoutAnyPersonIdents) = setUriEventsWithAndWithoutPersonIdent(events, personIdentsResponse)
-            totalNumberOfLoggedRecords += uriEventsWithPersonIdent
+            totalNumberOfLoggedRecords += uriEventsWithPersonIdent.toInt()
 
             if (uriEventsWithPersonIdent> 0) {
                 Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsWithPersonIdent)
+                postgresDatabase.upsertAuditLogSyncStatus(eventDate, LocalDate.now(), entity, uriEventsWithPersonIdent.toInt())
             }
             if (uriEventsWithoutAnyPersonIdents> 0) {
                 Metrics.uriEventsWithoutAnyPersonIdents.labels(entity).inc(uriEventsWithoutAnyPersonIdents)
             }
         }
-        if (totalNumberOfLoggedRecords> 0.0) {
-            postgresDatabase.upsertAuditLogSyncStatus(eventDate, LocalDate.now(), "Account", totalNumberOfLoggedRecords.toInt())
-        } else {
+        if (totalNumberOfLoggedRecords == 0) {
             log.warn { "No audit logs to log for $eventDate" }
         }
         Metrics.numberOfApiCalls.labels("RequestPersonIdents").inc(totalNumberOfApiCalls.toDouble())
