@@ -29,8 +29,10 @@ class MockPostgresDatabase : PostgresDatabase {
         eventDate: LocalDate,
         entity: String
     ): List<AuditLogSyncStatus> {
-        return listOf(
-            AuditLogSyncStatus(eventDate, LocalDate.now(), entity, 5)
-        )
+        return if (entity == "Account") {
+            listOf(AuditLogSyncStatus(eventDate, LocalDate.now(), "Account", 5))
+        } else {
+            emptyList()
+        }
     }
 }

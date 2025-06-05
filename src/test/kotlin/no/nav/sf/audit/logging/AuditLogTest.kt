@@ -121,7 +121,7 @@ class AuditLogTest {
     }
 
     @Test
-    fun `Should create one audit log record as succeded in postgres when two uri events for account`() {
+    fun `Should create one audit log record in Postgres when two uri events for account`() {
         val uriEvents = TestDataFactory.getUriEvents(2)
 
         val mockCounterChild = mockk<Counter.Child>(relaxed = true)
@@ -175,6 +175,32 @@ class AuditLogTest {
     }
 
     @Test
+    fun `Should create one audit log record in Postgres for Account When Case has been logged on the same day`() {
+        val uriEvents = TestDataFactory.getUriEvents(2)
+
+        val mockCounterChild = mockk<Counter.Child>(relaxed = true)
+        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
+        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
+        every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
+
+        every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
+        every { postgresDatabase.fetchAuditLogSyncStatusByEntity(any(), "Account") }.returns(
+            emptyList()
+        )
+
+        val personIdentByRecordId = mapOf(
+            "1" to "12345678901",
+            "2" to "12345678902"
+        )
+        val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
+        every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
+
+        val auditLog = AuditLog("Account", salesforceClient, postgresDatabase)
+        auditLog.fetchAndLog(LocalDate.now())
+        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 2) }
+    }
+
+    @Test
     fun `Should create two audit log records in postgres when uri events for account and case`() {
         val uriEvents = mutableListOf<UriEvent>()
         uriEvents.add(TestDataFactory.getUriEvent(1, "Account"))
@@ -210,6 +236,7 @@ class AuditLogTest {
         every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
 
         every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
+        every { postgresDatabase.fetchAuditLogSyncStatusByEntity(any(), "Case") }.returns(emptyList())
 
         val personIdentByRecordId = mapOf(
             "1" to "12345678901",

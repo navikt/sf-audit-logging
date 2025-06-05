@@ -18,7 +18,7 @@ class AuditLog(private val entity: String = "All", private val salesforceClient:
         var totalNumberOfLoggedRecords = 0
         var totalNumberOfApiCalls = 0
 
-        val successfulLoggedForEventDate = postgresDatabase.fetchAuditLogSyncStatus(eventDate)
+        val successfulLoggedForEventDate = if (entity == "All") postgresDatabase.fetchAuditLogSyncStatus(eventDate) else postgresDatabase.fetchAuditLogSyncStatusByEntity(eventDate, entity)
         if (successfulLoggedForEventDate.isNotEmpty()) {
             // Stop if we have already logged audit logs for the event date
             log.warn { "Audit logs have already been logged for $eventDate" }
