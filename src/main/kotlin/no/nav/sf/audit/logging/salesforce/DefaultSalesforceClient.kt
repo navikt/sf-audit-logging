@@ -43,17 +43,21 @@ class DefaultSalesforceClient(
                     val obj = JsonParser.parseString(response.bodyString()).asJsonObject
                     val recordEntries = obj["records"].asJsonArray
                     result.addAll(
-                        recordEntries.map {
+                        recordEntries.mapNotNull {
                             val record = it.asJsonObject
-                            UriEvent(
-                                record["EventDate"]?.takeIf { !it.isJsonNull }?.asString ?: "",
-                                record["QueriedEntities"]?.takeIf { !it.isJsonNull }?.asString ?: "",
-                                record["RecordId"]?.takeIf { !it.isJsonNull }?.asString ?: "",
-                                record["Operation"]?.takeIf { !it.isJsonNull }?.asString ?: "",
-                                record["Username"]?.takeIf { !it.isJsonNull }?.asString ?: ""
-                            )
+                            val eventDate = record["EventDate"]?.takeIf { !it.isJsonNull }?.toString()
+                            val queriedEntities = record["QueriedEntities"]?.takeIf { !it.isJsonNull }?.toString()
+                            val recordId = record["RecordId"]?.takeIf { !it.isJsonNull }?.toString()
+                            val operation = record["Operation"]?.takeIf { !it.isJsonNull }?.toString()
+                            val username = record["Username"]?.takeIf { !it.isJsonNull }?.toString()
+                            if (eventDate != null && queriedEntities != null && recordId != null && operation != null && username != null) {
+                                UriEvent(eventDate, queriedEntities, recordId, operation, username)
+                            } else {
+                                null
+                            }
                         }
                     )
+
                     totalSize = obj["totalSize"].asInt
                     done = obj["done"].asBoolean
                     if (!done) nextRecordsUrl = obj["nextRecordsUrl"].asString
