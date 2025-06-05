@@ -4,7 +4,7 @@ import mu.KotlinLogging
 import no.nav.sf.audit.logging.salesforce.UriEvent
 import java.util.Properties
 
-class ObjectFilter {
+class ObjectFilter(entity: String) {
     val objectsToBeLogged get() = fetchObjectsToBeLogged()
 
     private val log = KotlinLogging.logger { }

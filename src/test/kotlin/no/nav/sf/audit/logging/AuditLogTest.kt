@@ -19,7 +19,7 @@ class AuditLogTest {
 
     private val salesforceClient: SalesforceClient = mockk<SalesforceClient>()
     private val postgresDatabase = mockk<PostgresDatabase>()
-    private val classUnderTest = AuditLog(salesforceClient, postgresDatabase)
+    private val classUnderTest = AuditLog("All", salesforceClient, postgresDatabase)
 
     @BeforeEach
     fun setup() {
@@ -43,7 +43,7 @@ class AuditLogTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result = classUnderTest.fetchAndLog(LocalDate.now(), "All")
+        val result = classUnderTest.fetchAndLog(LocalDate.now())
         assertEquals(uriEvents.size, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
@@ -65,7 +65,7 @@ class AuditLogTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result = classUnderTest.fetchAndLog(LocalDate.now(), "All")
+        val result = classUnderTest.fetchAndLog(LocalDate.now())
         assertEquals(1, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
@@ -88,7 +88,7 @@ class AuditLogTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result = classUnderTest.fetchAndLog(LocalDate.now(), "All")
+        val result = classUnderTest.fetchAndLog(LocalDate.now())
         assertEquals(2, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
@@ -113,7 +113,7 @@ class AuditLogTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result = classUnderTest.fetchAndLog(LocalDate.now(), "All")
+        val result = classUnderTest.fetchAndLog(LocalDate.now())
         assertEquals(0, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") }
@@ -138,7 +138,7 @@ class AuditLogTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        classUnderTest.fetchAndLog(LocalDate.now(), "All")
+        classUnderTest.fetchAndLog(LocalDate.now())
         verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 2) }
     }
 
@@ -170,7 +170,7 @@ class AuditLogTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result = classUnderTest.fetchAndLog(LocalDate.now(), "All")
+        val result = classUnderTest.fetchAndLog(LocalDate.now())
         assertEquals(0, result)
     }
 
@@ -194,8 +194,33 @@ class AuditLogTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        classUnderTest.fetchAndLog(LocalDate.now(), "All")
+        classUnderTest.fetchAndLog(LocalDate.now())
         verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 1) }
+        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Case", 1) }
+    }
+
+    @Test
+    fun `Should ignore all entities except case when the entity is set to case`() {
+        val uriEvents = mutableListOf<UriEvent>()
+        uriEvents.add(TestDataFactory.getUriEvent(1, "Account"))
+        uriEvents.add(TestDataFactory.getUriEvent(2, "Case"))
+
+        val mockCounterChild = mockk<Counter.Child>(relaxed = true)
+        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Case") } returns mockCounterChild
+        every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
+
+        every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
+
+        val personIdentByRecordId = mapOf(
+            "1" to "12345678901",
+            "2" to "12345678902"
+        )
+        val personIdentResponse = PersonIdentsResponse("Case", 1, personIdentByRecordId)
+        every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
+
+        val auditLog = AuditLog("Case", salesforceClient, postgresDatabase)
+        auditLog.fetchAndLog(LocalDate.now())
+        verify(exactly = 0) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 1) }
         verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Case", 1) }
     }
 }

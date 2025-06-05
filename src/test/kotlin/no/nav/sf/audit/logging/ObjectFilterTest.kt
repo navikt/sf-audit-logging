@@ -6,16 +6,17 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ObjectFilterTest {
-    val classUnderTest = ObjectFilter()
 
     @Test
     fun `Should refer to the person ident field on Accounts`() {
+        val classUnderTest = ObjectFilter("All")
         val result = classUnderTest.objectsToBeLogged.getProperty("Account")
-        assertEquals(result, "INT_PersonIdent__c")
+        assertEquals("INT_PersonIdent__c", result)
     }
 
     @Test
     fun `Should be more than one object to be logged`() {
+        val classUnderTest = ObjectFilter("All")
         val objectsToBeLogged = classUnderTest.objectsToBeLogged
         assertTrue(objectsToBeLogged.size > 1)
     }
@@ -39,6 +40,7 @@ class ObjectFilterTest {
             )
         )
 
+        val classUnderTest = ObjectFilter("All")
         val filteredEvents = classUnderTest.filterUriEventsToHaveObjectsToBeLogged(uriEvents)
         assertEquals(1, filteredEvents.size)
     }
