@@ -15,10 +15,17 @@ class ObjectFilterTest {
     }
 
     @Test
-    fun `Should be more than one object to be logged`() {
+    fun `Should be more than one object to be logged when entity is set to All`() {
         val classUnderTest = ObjectFilter("All")
         val objectsToBeLogged = classUnderTest.objectsToBeLogged
         assertTrue(objectsToBeLogged.size > 1)
+    }
+
+    @Test
+    fun `Should be one object to be logged when entity is set to Case`() {
+        val classUnderTest = ObjectFilter("Case")
+        val objectsToBeLogged = classUnderTest.objectsToBeLogged
+        assertEquals(1, objectsToBeLogged.size)
     }
 
     @Test
