@@ -41,9 +41,7 @@ class DefaultSalesforceClient(
                 val response = client(request)
                 if (response.status.successful) {
                     val obj = JsonParser.parseString(response.bodyString()).asJsonObject
-                    log.info("Start mapping")
                     result = UriEventMapper().mapFromJsonArray(obj["records"].asJsonArray)
-                    log.info({ "Mapped ${result.size} URI events" })
                     totalSize = obj["totalSize"].asInt
                     done = obj["done"].asBoolean
                     if (!done) nextRecordsUrl = obj["nextRecordsUrl"].asString

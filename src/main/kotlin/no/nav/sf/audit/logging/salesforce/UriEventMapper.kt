@@ -8,27 +8,21 @@ class UriEventMapper {
 
     fun mapFromJsonArray(recordEntries: JsonArray): MutableList<UriEvent> {
         val result = mutableListOf<UriEvent>()
-        try {
-            log.info("Record entries $recordEntries")
-
-            result.addAll(
-                recordEntries.mapNotNull {
-                    val record = it.asJsonObject
-                    val eventDate = record["EventDate"]?.takeIf { !it.isJsonNull }?.toString()
-                    val queriedEntities = record["QueriedEntities"]?.takeIf { !it.isJsonNull }?.toString()
-                    val recordId = record["RecordId"]?.takeIf { !it.isJsonNull }?.toString()
-                    val operation = record["Operation"]?.takeIf { !it.isJsonNull }?.toString()
-                    val username = record["Username"]?.takeIf { !it.isJsonNull }?.toString()
-                    if (eventDate != null && queriedEntities != null && recordId != null && operation != null && username != null) {
-                        UriEvent(eventDate, queriedEntities, recordId, operation, username)
-                    } else {
-                        null
-                    }
+        result.addAll(
+            recordEntries.mapNotNull {
+                val record = it.asJsonObject
+                val eventDate = record["EventDate"]?.takeIf { !it.isJsonNull }?.asString
+                val queriedEntities = record["QueriedEntities"]?.takeIf { !it.isJsonNull }?.asString
+                val recordId = record["RecordId"]?.takeIf { !it.isJsonNull }?.asString
+                val operation = record["Operation"]?.takeIf { !it.isJsonNull }?.asString
+                val username = record["Username"]?.takeIf { !it.isJsonNull }?.asString
+                if (!eventDate.isNullOrBlank() && !queriedEntities.isNullOrBlank() && !recordId.isNullOrBlank() && !operation.isNullOrBlank() && !username.isNullOrBlank()) {
+                    UriEvent(eventDate, queriedEntities, recordId, operation, username)
+                } else {
+                    null
                 }
-            )
-        } catch (e: Exception) {
-            log.error("Failed to map JSON array to UriEvent: ${e.message}", e)
-        }
+            }
+        )
         return result
     }
 }
