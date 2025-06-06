@@ -5,9 +5,8 @@ import no.nav.sf.audit.logging.salesforce.UriEvent
 import java.util.Properties
 
 class ObjectFilter(val entity: String) {
-    val objectsToBeLogged get() = fetchObjectsToBeLogged()
-
     private val log = KotlinLogging.logger { }
+    val objectsToBeLogged = fetchObjectsToBeLogged()
 
     fun filterUriEventsToHaveObjectsToBeLogged(uriEvents: List<UriEvent>): List<UriEvent> {
         log.info("Filtering URI events ${uriEvents.size} for entity: $entity")
