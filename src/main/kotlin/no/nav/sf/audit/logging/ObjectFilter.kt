@@ -9,16 +9,13 @@ class ObjectFilter(val entity: String) {
     val objectsToBeLogged = fetchObjectsToBeLogged()
 
     fun filterUriEventsToHaveObjectsToBeLogged(uriEvents: List<UriEvent>): List<UriEvent> {
-        log.info("Filtering URI events ${uriEvents.size} for entity: $entity")
-        if (uriEvents.size> 1) {
-            log.info("URI events: ${uriEvents.joinToString { "${it.entity} - ${it.recordId}" }}")
+        for (uriEvent in uriEvents) {
+            log.info { "Processing URI event: ${uriEvent.entity} - ${objectsToBeLogged.containsKey("Case")}" }
         }
-        log.info(objectsToBeLogged.entries.firstOrNull()?.toString() ?: "No objects found")
         return uriEvents.filter { objectsToBeLogged.containsKey(it.entity) }
     }
 
     private fun fetchObjectsToBeLogged(): Properties {
-        log.info("Fetching objects to be logged for entity: $entity")
         val allObjects = try {
             ObjectFilter::class.java.getResourceAsStream("/objects.yaml")?.use { inputStream ->
                 Properties().apply { load(inputStream) }
@@ -27,7 +24,6 @@ class ObjectFilter(val entity: String) {
             log.error(e) { "Failed to load objects.yaml" }
             Properties()
         }
-        log.info("Loaded objects: ${allObjects.size}")
         return if (entity == "All") {
             allObjects
         } else {
@@ -40,7 +36,6 @@ class ObjectFilter(val entity: String) {
             if (filteredObjects.isEmpty()) {
                 log.warn { "No objects found for entity: $entity" }
             }
-            log.info("Loaded objects - filtered: ${filteredObjects.size}")
             filteredObjects
         }
     }
