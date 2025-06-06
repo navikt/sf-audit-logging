@@ -10,10 +10,12 @@ class ObjectFilter(val entity: String) {
     private val log = KotlinLogging.logger { }
 
     fun filterUriEventsToHaveObjectsToBeLogged(uriEvents: List<UriEvent>): List<UriEvent> {
+        log.info("Filtering URI events ${uriEvents.size} for entity: $entity")
         return uriEvents.filter { objectsToBeLogged.containsKey(it.entity) }
     }
 
     private fun fetchObjectsToBeLogged(): Properties {
+        log.info("Fetching objects to be logged for entity: $entity")
         val allObjects = try {
             ObjectFilter::class.java.getResourceAsStream("/objects.yaml")?.use { inputStream ->
                 Properties().apply { load(inputStream) }
@@ -22,7 +24,7 @@ class ObjectFilter(val entity: String) {
             log.error(e) { "Failed to load objects.yaml" }
             Properties()
         }
-
+        log.info("Loaded objects: ${allObjects.size}")
         return if (entity == "All") {
             allObjects
         } else {
@@ -35,6 +37,7 @@ class ObjectFilter(val entity: String) {
             if (filteredObjects.isEmpty()) {
                 log.warn { "No objects found for entity: $entity" }
             }
+            log.info("Loaded objects - filtered: ${filteredObjects.size}")
             filteredObjects
         }
     }
