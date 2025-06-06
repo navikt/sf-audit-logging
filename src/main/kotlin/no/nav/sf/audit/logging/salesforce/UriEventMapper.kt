@@ -6,7 +6,7 @@ import mu.KotlinLogging
 class UriEventMapper {
     private val log = KotlinLogging.logger { }
     fun mapFromJsonArray(recordEntries: JsonArray): MutableList<UriEvent> {
-        log.info(recordEntries.toString())
+        log.info("Record entries $recordEntries")
         val result = mutableListOf<UriEvent>()
         result.addAll(
             recordEntries.mapNotNull {
