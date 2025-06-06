@@ -9,9 +9,6 @@ class ObjectFilter(val entity: String) {
     val objectsToBeLogged = fetchObjectsToBeLogged()
 
     fun filterUriEventsToHaveObjectsToBeLogged(uriEvents: List<UriEvent>): List<UriEvent> {
-        for (uriEvent in uriEvents) {
-            log.info { "Processing URI event: ${uriEvent.entity} - ${objectsToBeLogged.containsKey("Case")}" }
-        }
         return uriEvents.filter { objectsToBeLogged.containsKey(it.entity) }
     }
 
