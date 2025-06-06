@@ -10,6 +10,10 @@ class ObjectFilter(val entity: String) {
 
     fun filterUriEventsToHaveObjectsToBeLogged(uriEvents: List<UriEvent>): List<UriEvent> {
         log.info("Filtering URI events ${uriEvents.size} for entity: $entity")
+        if (uriEvents.size> 1) {
+            log.info("URI events: ${uriEvents.joinToString { "${it.entity} - ${it.recordId}" }}")
+        }
+        log.info(objectsToBeLogged.entries.firstOrNull()?.toString() ?: "No objects found")
         return uriEvents.filter { objectsToBeLogged.containsKey(it.entity) }
     }
 
