@@ -41,19 +41,7 @@ class DefaultSalesforceClient(
                 val response = client(request)
                 if (response.status.successful) {
                     val obj = JsonParser.parseString(response.bodyString()).asJsonObject
-                    val recordEntries = obj["records"].asJsonArray
-                    result.addAll(
-                        recordEntries.map {
-                            val record = it.asJsonObject
-                            UriEvent(
-                                record["EventDate"]?.takeIf { !it.isJsonNull }?.asString ?: "",
-                                record["QueriedEntities"]?.takeIf { !it.isJsonNull }?.asString ?: "",
-                                record["RecordId"]?.takeIf { !it.isJsonNull }?.asString ?: "",
-                                record["Operation"]?.takeIf { !it.isJsonNull }?.asString ?: "",
-                                record["Username"]?.takeIf { !it.isJsonNull }?.asString ?: ""
-                            )
-                        }
-                    )
+                    result = UriEventMapper().mapFromJsonArray(obj["records"].asJsonArray)
                     totalSize = obj["totalSize"].asInt
                     done = obj["done"].asBoolean
                     if (!done) nextRecordsUrl = obj["nextRecordsUrl"].asString

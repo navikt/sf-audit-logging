@@ -7,6 +7,7 @@ import no.nav.sf.audit.logging.Application
 import no.nav.sf.audit.logging.env
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -46,13 +47,14 @@ class DefaultPostgresDatabase : PostgresDatabase {
         }
     }
 
-    override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, numberOfRecords: Int): AuditLogSyncStatus? {
+    override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, entity: String, numberOfRecords: Int): AuditLogSyncStatus? {
         return transaction(database) {
             AuditLogSyncStatusTable.upsert(
-                keys = arrayOf(AuditLogSyncStatusTable.eventDate)
+                keys = arrayOf(AuditLogSyncStatusTable.eventDate, AuditLogSyncStatusTable.entity)
             ) {
                 it[AuditLogSyncStatusTable.eventDate] = eventDate
                 it[AuditLogSyncStatusTable.syncDate] = syncDate
+                it[AuditLogSyncStatusTable.entity] = entity
                 it[AuditLogSyncStatusTable.numberOfRecords] = numberOfRecords
             }
         }.resultedValues?.firstOrNull()?.toAuditLogSyncStatus()
@@ -63,6 +65,19 @@ class DefaultPostgresDatabase : PostgresDatabase {
             AuditLogSyncStatusTable.selectAll()
                 .where {
                     (AuditLogSyncStatusTable.eventDate eq eventDate)
+                }
+                .map { it.toAuditLogSyncStatus() }
+        }
+    }
+
+    override fun fetchAuditLogSyncStatusByEntity(
+        eventDate: LocalDate,
+        entity: String
+    ): List<AuditLogSyncStatus> {
+        return transaction(database) {
+            AuditLogSyncStatusTable.selectAll()
+                .where {
+                    (AuditLogSyncStatusTable.eventDate eq eventDate) and (AuditLogSyncStatusTable.entity eq entity)
                 }
                 .map { it.toAuditLogSyncStatus() }
         }
