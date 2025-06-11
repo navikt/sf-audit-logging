@@ -11,7 +11,7 @@ import no.nav.sf.audit.logging.salesforce.UriEvent
 import java.time.LocalDate
 
 class AuditLog(private val entity: String = "All", private val salesforceClient: SalesforceClient = DefaultSalesforceClient(), private val postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()) {
-    private val objectFilter = ObjectFilter(entity)
+    private val uriEventFilterHelper = UriEventFilterHelper(entity)
     private val log = KotlinLogging.logger { }
 
     fun fetchAndLog(eventDate: LocalDate): Int {
@@ -26,12 +26,12 @@ class AuditLog(private val entity: String = "All", private val salesforceClient:
         }
         log.info { "Fetch and log audit logs for $eventDate" }
         Metrics.clearUriEventsCounter()
-        val filteredUriEvents = objectFilter.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents(eventDate))
+        val filteredUriEvents = uriEventFilterHelper.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents(eventDate))
         log.info { "Filtered ${filteredUriEvents.size} URI events" }
         filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
             val personIdentsResponse = salesforceClient.fetchPersonIdents(
                 objectName = entity,
-                personIdentSelectClause = objectFilter.objectsToBeLogged.getProperty(entity),
+                personIdentSelectClause = uriEventFilterHelper.objectsToBeLogged.getProperty(entity),
                 recordIds = events.map { it.recordId }
             )
             totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls

@@ -4,17 +4,17 @@ import mu.KotlinLogging
 import no.nav.sf.audit.logging.salesforce.UriEvent
 import java.util.Properties
 
-class ObjectFilter(val entity: String) {
+class UriEventFilterHelper(val entity: String) {
     private val log = KotlinLogging.logger { }
     val objectsToBeLogged = fetchObjectsToBeLogged()
 
     fun filterUriEventsToHaveObjectsToBeLogged(uriEvents: List<UriEvent>): List<UriEvent> {
-        return uriEvents.filter { objectsToBeLogged.containsKey(it.entity) }
+        return uriEvents.filter { objectsToBeLogged.containsKey(it.entity) && it.userType == "Standard" }
     }
 
     private fun fetchObjectsToBeLogged(): Properties {
         val allObjects = try {
-            ObjectFilter::class.java.getResourceAsStream("/objects.yaml")?.use { inputStream ->
+            UriEventFilterHelper::class.java.getResourceAsStream("/objects.yaml")?.use { inputStream ->
                 Properties().apply { load(inputStream) }
             } ?: throw IllegalStateException("Cannot find objects.yaml in resources")
         } catch (e: Exception) {

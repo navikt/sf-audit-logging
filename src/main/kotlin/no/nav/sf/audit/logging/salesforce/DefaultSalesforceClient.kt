@@ -30,6 +30,7 @@ class DefaultSalesforceClient(
         var nextRecordsUrl = "/services/data/$apiVersion/query?q=$encodedQuery"
 
         var result = mutableListOf<UriEvent>()
+        var totalSize = 0
 
         while (!done) {
             val request = org.http4k.core.Request(Method.GET, accessTokenHandler.instanceUrl + nextRecordsUrl)
@@ -41,9 +42,8 @@ class DefaultSalesforceClient(
                 if (response.status.successful) {
                     val obj = JsonParser.parseString(response.bodyString()).asJsonObject
                     result.addAll(UriEventMapper().mapFromJsonArray(obj["records"].asJsonArray))
-                    var totalSize = obj["totalSize"].asInt
+                    totalSize = obj["totalSize"].asInt
                     done = obj["done"].asBoolean
-                    log.info { "Fetched ${result.size} of $totalSize URI events" }
                     if (!done) nextRecordsUrl = obj["nextRecordsUrl"].asString
                 } else {
                     log.error { "Failed to fetch URI events - response ${response.status.code}:${response.bodyString()}" }
@@ -54,7 +54,7 @@ class DefaultSalesforceClient(
                 done = true
             }
         }
-
+        log.info { "Fetched ${result.size} of $totalSize URI events" }
         return result
     }
 

@@ -21,7 +21,8 @@ object TestDataFactory {
             username = "testuser$index",
             entity = entity,
             operation = "CREATE",
-            recordId = index.toString()
+            recordId = index.toString(),
+            userType = "Standard"
         )
     }
 }
