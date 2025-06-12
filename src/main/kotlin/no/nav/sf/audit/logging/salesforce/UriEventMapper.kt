@@ -16,8 +16,9 @@ class UriEventMapper {
                 val recordId = record["RecordId"]?.takeIf { !it.isJsonNull }?.asString
                 val operation = record["Operation"]?.takeIf { !it.isJsonNull }?.asString
                 val username = record["Username"]?.takeIf { !it.isJsonNull }?.asString
-                if (!eventDate.isNullOrBlank() && !queriedEntities.isNullOrBlank() && !recordId.isNullOrBlank() && !operation.isNullOrBlank() && !username.isNullOrBlank()) {
-                    UriEvent(eventDate, queriedEntities, recordId, operation, username)
+                val userType = record["UserType"]?.takeIf { !it.isJsonNull }?.asString
+                if (!eventDate.isNullOrBlank() && !queriedEntities.isNullOrBlank() && !recordId.isNullOrBlank() && !operation.isNullOrBlank() && !username.isNullOrBlank() && !userType.isNullOrBlank()) {
+                    UriEvent(eventDate, queriedEntities, recordId, operation, username, userType)
                 } else {
                     null
                 }
