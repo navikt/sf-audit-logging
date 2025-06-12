@@ -5,7 +5,8 @@ WorkOrder: Account.INT_PersonIdent__c
 WorkOrderLineItem: WorkOrder.Account.INT_PersonIdent__c
 NavTask__c: CRM_Account__r.INT_PersonIdent__c
 HOT_Entitlement__c: Account__r.INT_PersonIdent__c
-HOT_Claim__c: : Account__r.INT_PersonIdent__c
+HOT_Claim__c: Account__r.INT_PersonIdent__c
+HOT_Request__c: Account__r.INT_PersonIdent__c
 ServiceAppointment: Account.INT_PersonIdent__c
 Thread__c: CRM_Account__r.INT_PersonIdent__c
 Conversation_Note__c: CRM_Account__r.INT_PersonIdent__c
