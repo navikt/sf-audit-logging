@@ -13,6 +13,7 @@ import java.time.LocalDate
 class AuditLog(private val entity: String = "All", private val salesforceClient: SalesforceClient = DefaultSalesforceClient(), private val postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()) {
     private val uriEventFilterHelper = UriEventFilterHelper(entity)
     private val log = KotlinLogging.logger { }
+    private val naudit = KotlinLogging.logger("AuditLogger")
 
     fun fetchAndLog(eventDate: LocalDate): Int {
         var totalNumberOfLoggedRecords = 0
@@ -61,7 +62,7 @@ class AuditLog(private val entity: String = "All", private val salesforceClient:
             if (personIdent != null) {
                 event.personIdent = personIdent
                 uriEventsWithPersonIdent += 1.0
-                // ARCSIGHT.info(createLogMessage(event))
+                naudit.info(createLogMessage(event))
             } else {
                 uriEventsWithoutAnyPersonIdents += 1.0
             }
