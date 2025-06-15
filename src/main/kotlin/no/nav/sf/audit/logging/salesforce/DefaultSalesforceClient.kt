@@ -87,7 +87,7 @@ class DefaultSalesforceClient(
                 }
                 numberOfApiCalls++
             } else {
-                log.error { "Failed to fetch person idents - response ${response.status.code}:${response.bodyString()}" }
+                log.error { "Failed to fetch person idents for $objectName - response ${response.status.code}:${response.bodyString()}" }
                 return PersonIdentsResponse(objectName, 0, mapOf())
             }
         }
