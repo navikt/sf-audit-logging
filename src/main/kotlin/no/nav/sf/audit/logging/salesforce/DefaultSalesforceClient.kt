@@ -7,8 +7,7 @@ import no.nav.sf.audit.logging.config_SALESFORCE_API_VERSION
 import no.nav.sf.audit.logging.env
 import no.nav.sf.audit.logging.token.AccessTokenHandler
 import no.nav.sf.audit.logging.token.DefaultAccessTokenHandler
-import org.http4k.client.ApacheClient
-import org.http4k.client.ApacheClient.invoke
+import org.http4k.client.OkHttp
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import java.net.URLEncoder
@@ -16,7 +15,7 @@ import java.time.LocalDate
 
 class DefaultSalesforceClient(
     private val accessTokenHandler: AccessTokenHandler = DefaultAccessTokenHandler(),
-    private val client: HttpHandler = ApacheClient()
+    private val client: HttpHandler = OkHttp()
 ) : SalesforceClient {
     private val log = KotlinLogging.logger { }
 
