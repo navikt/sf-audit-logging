@@ -8,7 +8,7 @@
         </encoder>
     </appender>
 
-    <logger name="AuditLogger" level="${NAUDIT_LOG_LEVEL:-INFO}" additivity="false">
+    <logger name="AuditLogger" level="INFO" additivity="false">
         <appender-ref ref="AuditLogger"/>
     </logger>
 
