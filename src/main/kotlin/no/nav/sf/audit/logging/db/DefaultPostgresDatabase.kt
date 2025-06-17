@@ -19,12 +19,6 @@ const val NAIS_DB_PREFIX = "NAIS_DATABASE_SF_AUDIT_LOGGING_SF_AUDIT_LOGGING_"
 class DefaultPostgresDatabase : PostgresDatabase {
     private val log = KotlinLogging.logger { }
     private val dbJdbcUrl = env("${no.nav.sf.audit.logging.db.NAIS_DB_PREFIX}${Application.context}_JDBC_URL")
-    val database = try {
-        Database.connect(HikariDataSource(hikariConfig()))
-    } catch (e: Exception) {
-        log.error("Failed to connect to the database", e)
-        null
-    }
 
     private fun hikariConfig(): HikariConfig = HikariConfig().apply {
         jdbcUrl = dbJdbcUrl
@@ -39,16 +33,22 @@ class DefaultPostgresDatabase : PostgresDatabase {
     }
 
     override fun retrieveAuditLogSyncStatusesAsMap(): MutableMap<LocalDate, List<AuditLogSyncStatus>> {
-        return transaction(database) {
+        val dataSource = HikariDataSource(hikariConfig())
+        val database = Database.connect(dataSource)
+        val result = transaction(database) {
             AuditLogSyncStatusTable.selectAll()
                 .map { it.toAuditLogSyncStatus() }
                 .groupBy { it.syncDate }
                 .toMutableMap()
         }
+        dataSource.close()
+        return result
     }
 
     override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, entity: String, numberOfRecords: Int): AuditLogSyncStatus? {
-        return transaction(database) {
+        val dataSource = HikariDataSource(hikariConfig())
+        val database = Database.connect(dataSource)
+        val result = transaction(database) {
             AuditLogSyncStatusTable.upsert(
                 keys = arrayOf(AuditLogSyncStatusTable.eventDate, AuditLogSyncStatusTable.entity)
             ) {
@@ -58,33 +58,45 @@ class DefaultPostgresDatabase : PostgresDatabase {
                 it[AuditLogSyncStatusTable.numberOfRecords] = numberOfRecords
             }
         }.resultedValues?.firstOrNull()?.toAuditLogSyncStatus()
+        dataSource.close()
+        return result
     }
 
     override fun fetchAuditLogSyncStatus(eventDate: LocalDate): List<AuditLogSyncStatus> {
-        return transaction(database) {
+        val dataSource = HikariDataSource(hikariConfig())
+        val database = Database.connect(dataSource)
+        val result = transaction(database) {
             AuditLogSyncStatusTable.selectAll()
                 .where {
                     (AuditLogSyncStatusTable.eventDate eq eventDate)
                 }
                 .map { it.toAuditLogSyncStatus() }
         }
+        dataSource.close()
+        return result
     }
 
     override fun fetchAuditLogSyncStatusByEntity(
         eventDate: LocalDate,
         entity: String
     ): List<AuditLogSyncStatus> {
-        return transaction(database) {
+        val dataSource = HikariDataSource(hikariConfig())
+        val database = Database.connect(dataSource)
+        val result = transaction(database) {
             AuditLogSyncStatusTable.selectAll()
                 .where {
                     (AuditLogSyncStatusTable.eventDate eq eventDate) and (AuditLogSyncStatusTable.entity eq entity)
                 }
                 .map { it.toAuditLogSyncStatus() }
         }
+        dataSource.close()
+        return result
     }
 
     fun createStatusTable(dropFirst: Boolean = false) {
-        transaction {
+        val dataSource = HikariDataSource(hikariConfig())
+        val database = Database.connect(dataSource)
+        transaction(database) {
             if (dropFirst) {
                 log.info { "Dropping table log_sync_status" }
                 val dropStatement =
@@ -96,5 +108,6 @@ class DefaultPostgresDatabase : PostgresDatabase {
             log.info { "Creating table audit_log_status" }
             SchemaUtils.create(AuditLogSyncStatusTable)
         }
+        dataSource.close()
     }
 }
