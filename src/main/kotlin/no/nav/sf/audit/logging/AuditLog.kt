@@ -57,12 +57,18 @@ class AuditLog(private val entity: String = "All", private val salesforceClient:
     private fun setUriEventsWithAndWithoutPersonIdent(events: List<UriEvent>, personIdentsResponse: PersonIdentsResponse): Pair<Double, Double> {
         var uriEventsWithPersonIdent = 0.0
         var uriEventsWithoutAnyPersonIdents = 0.0
+        var batchCounter = 0
         events.forEach { event ->
             val personIdent = personIdentsResponse.personIdentByRecordId[event.recordId]
             if (personIdent != null) {
                 event.personIdent = personIdent
                 uriEventsWithPersonIdent += 1.0
                 naudit.info(createLogMessage(event))
+                batchCounter++
+                if (batchCounter == 100) {
+                    Thread.sleep(2000) // Pause for 2 seconds
+                    batchCounter = 0
+                }
             } else {
                 uriEventsWithoutAnyPersonIdents += 1.0
             }
