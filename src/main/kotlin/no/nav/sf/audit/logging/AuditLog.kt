@@ -62,7 +62,7 @@ class AuditLog(private val entity: String = "All", private val salesforceClient:
             if (personIdent != null) {
                 event.personIdent = personIdent
                 uriEventsWithPersonIdent += 1.0
-                // naudit.info(createLogMessage(event))
+                naudit.info(createLogMessage(event))
             } else {
                 uriEventsWithoutAnyPersonIdents += 1.0
             }
