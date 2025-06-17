@@ -24,7 +24,7 @@ class DefaultPostgresDatabase : PostgresDatabase {
         jdbcUrl = dbJdbcUrl
         driverClassName = "org.postgresql.Driver"
         minimumIdle = 1
-        maxLifetime = 26000
+        maxLifetime = 1800000
         maximumPoolSize = 10
         connectionTimeout = 250
         idleTimeout = 10000
