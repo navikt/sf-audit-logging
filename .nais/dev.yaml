@@ -32,6 +32,7 @@ spec:
     sqlInstances:
       - type: POSTGRES_16
         tier: db-f1-micro
+        max-lifetime: 1800000
         databases:
           - name: sf-audit-logging-dev
   ingresses:
