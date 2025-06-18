@@ -41,6 +41,7 @@ class AuditLog(private val entity: String = "All", private val salesforceClient:
 
             if (uriEventsWithPersonIdent> 0) {
                 Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsWithPersonIdent)
+                log.info() { "Logging ${uriEventsWithPersonIdent.toInt()} metrics entity $entity" }
                 postgresDatabase.upsertAuditLogSyncStatus(eventDate, LocalDate.now(), entity, uriEventsWithPersonIdent.toInt())
             }
             if (uriEventsWithoutAnyPersonIdents> 0) {
@@ -57,16 +58,23 @@ class AuditLog(private val entity: String = "All", private val salesforceClient:
     private fun setUriEventsWithAndWithoutPersonIdent(events: List<UriEvent>, personIdentsResponse: PersonIdentsResponse): Pair<Double, Double> {
         var uriEventsWithPersonIdent = 0.0
         var uriEventsWithoutAnyPersonIdents = 0.0
+        var batchCounter = 0
         events.forEach { event ->
             val personIdent = personIdentsResponse.personIdentByRecordId[event.recordId]
             if (personIdent != null) {
                 event.personIdent = personIdent
                 uriEventsWithPersonIdent += 1.0
-                naudit.info(createLogMessage(event))
+                // naudit.info(createLogMessage(event))
+                batchCounter++
+                if (batchCounter == 100) {
+                    Thread.sleep(2000) // Pause for 2 seconds
+                    batchCounter = 0
+                }
             } else {
                 uriEventsWithoutAnyPersonIdents += 1.0
             }
         }
+        log.info() { "Total URI events with person ident: $uriEventsWithPersonIdent, without any person idents: $uriEventsWithoutAnyPersonIdents" }
         return Pair(uriEventsWithPersonIdent, uriEventsWithoutAnyPersonIdents)
     }
 }
