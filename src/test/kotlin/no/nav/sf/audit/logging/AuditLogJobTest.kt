@@ -13,6 +13,7 @@ import no.nav.sf.audit.logging.salesforce.UriEvent
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 
 class AuditLogJobTest {
@@ -169,8 +170,9 @@ class AuditLogJobTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result = AuditLogJob.fetchAndLog(LocalDate.now(), "All", salesforceClient, postgresDatabase)
-        assertEquals(0, result)
+        assertThrows<IllegalStateException> {
+            AuditLogJob.fetchAndLog(LocalDate.now(), "All", salesforceClient, postgresDatabase)
+        }
     }
 
     @Test

@@ -46,8 +46,8 @@ object Application {
         val eventDate = eventDateParam?.let { date: String -> LocalDate.parse(date) } ?: LocalDate.now().minusDays(1)
         val entityParam = it.query("entity")
         val entity = entityParam?.let { entity: String -> entity } ?: "All"
-        val numberOfRecordsLogged = AuditLogJob.fetchAndLog(eventDate, entity)
-        Response(OK).body(numberOfRecordsLogged.toString())
+        AuditLogJob.activateFetchAndLog(eventDate, entity)
+        Response(OK).body("Finished logging for event date $eventDate and entity $entity")
     }
 
     private val metaDataHandler: HttpHandler = {

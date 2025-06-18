@@ -1,5 +1,7 @@
 package no.nav.sf.audit.logging
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import no.nav.sf.audit.logging.db.DefaultPostgresDatabase
 import no.nav.sf.audit.logging.db.MockPostgresDatabase
@@ -12,10 +14,19 @@ import java.time.LocalDate
 
 object AuditLogJob {
 
+    private var active = false
     private val log = KotlinLogging.logger { }
     private val naudit = KotlinLogging.logger("AuditLogger")
 
-    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", salesforceClient: SalesforceClient = DefaultSalesforceClient(), postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()): Int {
+    fun activateFetchAndLog(eventDate: LocalDate, entity: String, salesforceClient: SalesforceClient = DefaultSalesforceClient(), postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()) {
+        if (active) throw IllegalStateException("Cannot activate new job since one is already active")
+        active = true
+        GlobalScope.launch {
+            fetchAndLog(eventDate, entity, salesforceClient, postgresDatabase)
+        }
+    }
+
+    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase): Int {
         val uriEventFilterHelper = UriEventFilterHelper(entity)
         var totalNumberOfLoggedRecords = 0
         var totalNumberOfApiCalls = 0
@@ -23,8 +34,8 @@ object AuditLogJob {
         val successfulLoggedForEventDate = if (entity == "All") postgresDatabase.fetchAuditLogSyncStatus(eventDate) else postgresDatabase.fetchAuditLogSyncStatusByEntity(eventDate, entity)
         if (successfulLoggedForEventDate.isNotEmpty()) {
             // Stop if we have already logged audit logs for the event date
-            log.warn { "Audit logs have already been logged for $eventDate" }
-            return 0
+            active = false
+            throw IllegalStateException("Audit logs have already been logged for $eventDate")
         }
         log.info { "Fetch and log audit logs for $eventDate" }
         Metrics.clearUriEventsCounter()
