@@ -46,7 +46,7 @@ object Application {
         val eventDate = eventDateParam?.let { date: String -> LocalDate.parse(date) } ?: LocalDate.now().minusDays(1)
         val entityParam = it.query("entity")
         val entity = entityParam?.let { entity: String -> entity } ?: "All"
-        val numberOfRecordsLogged = AuditLog(entity).fetchAndLog(eventDate)
+        val numberOfRecordsLogged = AuditLog.fetchAndLog(eventDate, entity)
         Response(OK).body(numberOfRecordsLogged.toString())
     }
 

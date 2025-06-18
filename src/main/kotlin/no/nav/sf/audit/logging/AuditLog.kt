@@ -10,12 +10,13 @@ import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import no.nav.sf.audit.logging.salesforce.UriEvent
 import java.time.LocalDate
 
-class AuditLog(private val entity: String = "All", private val salesforceClient: SalesforceClient = DefaultSalesforceClient(), private val postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()) {
-    private val uriEventFilterHelper = UriEventFilterHelper(entity)
+object AuditLog {
+
     private val log = KotlinLogging.logger { }
     private val naudit = KotlinLogging.logger("AuditLogger")
 
-    fun fetchAndLog(eventDate: LocalDate): Int {
+    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", salesforceClient: SalesforceClient = DefaultSalesforceClient(), postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()): Int {
+        val uriEventFilterHelper = UriEventFilterHelper(entity)
         var totalNumberOfLoggedRecords = 0
         var totalNumberOfApiCalls = 0
 
