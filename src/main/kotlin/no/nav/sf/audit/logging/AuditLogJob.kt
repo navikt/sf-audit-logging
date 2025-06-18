@@ -1,0 +1,112 @@
+package no.nav.sf.audit.logging
+
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import mu.KotlinLogging
+import no.nav.sf.audit.logging.db.DefaultPostgresDatabase
+import no.nav.sf.audit.logging.db.MockPostgresDatabase
+import no.nav.sf.audit.logging.db.PostgresDatabase
+import no.nav.sf.audit.logging.salesforce.DefaultSalesforceClient
+import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
+import no.nav.sf.audit.logging.salesforce.SalesforceClient
+import no.nav.sf.audit.logging.salesforce.UriEvent
+import java.time.LocalDate
+
+object AuditLogJob {
+
+    var active = false
+    private val log = KotlinLogging.logger { }
+    private val naudit = KotlinLogging.logger("AuditLogger")
+
+    fun activateFetchAndLog(eventDate: LocalDate, entity: String, salesforceClient: SalesforceClient = DefaultSalesforceClient(), postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()) {
+        if (active) throw IllegalStateException("Cannot activate new job since one is already active")
+        active = true
+        GlobalScope.launch {
+            fetchAndLog(eventDate, entity, salesforceClient, postgresDatabase)
+        }
+    }
+
+    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase): Int {
+        val uriEventFilterHelper = UriEventFilterHelper(entity)
+        var totalNumberOfLoggedRecords = 0
+        var totalNumberOfApiCalls = 0
+
+        val successfulLoggedForEventDate =
+            if (entity == "All") postgresDatabase.fetchAuditLogSyncStatus(eventDate) else postgresDatabase.fetchAuditLogSyncStatusByEntity(
+                eventDate,
+                entity
+            )
+        if (successfulLoggedForEventDate.isNotEmpty()) {
+            // Stop if we have already logged audit logs for the event date
+            active = false
+            throw IllegalStateException("Audit logs have already been logged for $eventDate")
+        }
+        log.info { "Fetch and log audit logs for $eventDate" }
+        try {
+
+            Metrics.clearUriEventsCounter()
+            val filteredUriEvents =
+                uriEventFilterHelper.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents(eventDate))
+            log.info { "Filtered ${filteredUriEvents.size} URI events" }
+            filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
+                val personIdentsResponse = salesforceClient.fetchPersonIdents(
+                    objectName = entity,
+                    personIdentSelectClause = uriEventFilterHelper.objectsToBeLogged.getProperty(entity),
+                    recordIds = events.map { it.recordId }
+                )
+                totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls
+                val (uriEventsWithPersonIdent, uriEventsWithoutAnyPersonIdents) = setUriEventsWithAndWithoutPersonIdent(
+                    events,
+                    personIdentsResponse
+                )
+                totalNumberOfLoggedRecords += uriEventsWithPersonIdent.toInt()
+
+                if (uriEventsWithPersonIdent > 0) {
+                    Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsWithPersonIdent)
+                    log.info() { "Logging ${uriEventsWithPersonIdent.toInt()} metrics entity $entity" }
+                    postgresDatabase.upsertAuditLogSyncStatus(
+                        eventDate,
+                        LocalDate.now(),
+                        entity,
+                        uriEventsWithPersonIdent.toInt()
+                    )
+                }
+                if (uriEventsWithoutAnyPersonIdents > 0) {
+                    Metrics.uriEventsWithoutAnyPersonIdents.labels(entity).inc(uriEventsWithoutAnyPersonIdents)
+                }
+            }
+            if (totalNumberOfLoggedRecords == 0) {
+                log.warn { "No audit logs to log for $eventDate" }
+            }
+            Metrics.numberOfApiCalls.labels("RequestPersonIdents").inc(totalNumberOfApiCalls.toDouble())
+        } catch (e: Exception) {
+            log.error { "Error while fetching and logging audit logs " + e.message }
+        } finally {
+            active = false
+        }
+        return totalNumberOfLoggedRecords.toInt()
+    }
+
+    private fun setUriEventsWithAndWithoutPersonIdent(events: List<UriEvent>, personIdentsResponse: PersonIdentsResponse): Pair<Double, Double> {
+        var uriEventsWithPersonIdent = 0.0
+        var uriEventsWithoutAnyPersonIdents = 0.0
+        var batchCounter = 0
+        events.forEach { event ->
+            val personIdent = personIdentsResponse.personIdentByRecordId[event.recordId]
+            if (personIdent != null) {
+                event.personIdent = personIdent
+                uriEventsWithPersonIdent += 1.0
+                // naudit.info(createLogMessage(event))
+                batchCounter++
+                if (batchCounter == 100) {
+                    Thread.sleep(2000) // Pause for 2 seconds
+                    batchCounter = 0
+                }
+            } else {
+                uriEventsWithoutAnyPersonIdents += 1.0
+            }
+        }
+        log.info() { "Total URI events with person ident: $uriEventsWithPersonIdent, without any person idents: $uriEventsWithoutAnyPersonIdents" }
+        return Pair(uriEventsWithPersonIdent, uriEventsWithoutAnyPersonIdents)
+    }
+}
