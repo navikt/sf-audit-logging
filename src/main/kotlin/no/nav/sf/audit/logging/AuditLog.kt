@@ -41,6 +41,7 @@ class AuditLog(private val entity: String = "All", private val salesforceClient:
 
             if (uriEventsWithPersonIdent> 0) {
                 Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsWithPersonIdent)
+                log.info() { "Logging ${uriEventsWithPersonIdent.toInt()} metrics entity $entity" }
                 postgresDatabase.upsertAuditLogSyncStatus(eventDate, LocalDate.now(), entity, uriEventsWithPersonIdent.toInt())
             }
             if (uriEventsWithoutAnyPersonIdents> 0) {
@@ -73,6 +74,7 @@ class AuditLog(private val entity: String = "All", private val salesforceClient:
                 uriEventsWithoutAnyPersonIdents += 1.0
             }
         }
+        log.info() { "Total URI events with person ident: $uriEventsWithPersonIdent, without any person idents: $uriEventsWithoutAnyPersonIdents" }
         return Pair(uriEventsWithPersonIdent, uriEventsWithoutAnyPersonIdents)
     }
 }
