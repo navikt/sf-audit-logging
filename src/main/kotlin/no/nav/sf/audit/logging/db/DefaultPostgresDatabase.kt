@@ -26,8 +26,8 @@ class DefaultPostgresDatabase : PostgresDatabase {
         minimumIdle = 1
         maxLifetime = 1800000
         maximumPoolSize = 10
-        connectionTimeout = 250
-        idleTimeout = 10000
+        connectionTimeout = 100000
+        idleTimeout = 100000
         isAutoCommit = false
         transactionIsolation = "TRANSACTION_REPEATABLE_READ"
     }
