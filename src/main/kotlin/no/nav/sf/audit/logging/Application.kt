@@ -46,8 +46,14 @@ object Application {
         val eventDate = eventDateParam?.let { date: String -> LocalDate.parse(date) } ?: LocalDate.now().minusDays(1)
         val entityParam = it.query("entity")
         val entity = entityParam?.let { entity: String -> entity } ?: "All"
-        AuditLogJob.activateFetchAndLog(eventDate, entity)
-        Response(OK).body("Finished logging for event date $eventDate and entity $entity")
+
+        if (AuditLogJob.active) {
+            log.info("Audit log job is already active, cannot start a new one")
+            Response(OK).body("Audit log job is already active, cannot start a new one")
+        } else {
+            AuditLogJob.activateFetchAndLog(eventDate, entity)
+            Response(OK).body("Finished logging for event date $eventDate and entity $entity")
+        }
     }
 
     private val metaDataHandler: HttpHandler = {

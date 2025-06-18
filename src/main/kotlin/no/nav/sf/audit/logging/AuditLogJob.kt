@@ -14,7 +14,7 @@ import java.time.LocalDate
 
 object AuditLogJob {
 
-    private var active = false
+    var active = false
     private val log = KotlinLogging.logger { }
     private val naudit = KotlinLogging.logger("AuditLogger")
 
@@ -31,39 +31,59 @@ object AuditLogJob {
         var totalNumberOfLoggedRecords = 0
         var totalNumberOfApiCalls = 0
 
-        val successfulLoggedForEventDate = if (entity == "All") postgresDatabase.fetchAuditLogSyncStatus(eventDate) else postgresDatabase.fetchAuditLogSyncStatusByEntity(eventDate, entity)
+        val successfulLoggedForEventDate =
+            if (entity == "All") postgresDatabase.fetchAuditLogSyncStatus(eventDate) else postgresDatabase.fetchAuditLogSyncStatusByEntity(
+                eventDate,
+                entity
+            )
         if (successfulLoggedForEventDate.isNotEmpty()) {
             // Stop if we have already logged audit logs for the event date
             active = false
             throw IllegalStateException("Audit logs have already been logged for $eventDate")
         }
         log.info { "Fetch and log audit logs for $eventDate" }
-        Metrics.clearUriEventsCounter()
-        val filteredUriEvents = uriEventFilterHelper.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents(eventDate))
-        log.info { "Filtered ${filteredUriEvents.size} URI events" }
-        filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
-            val personIdentsResponse = salesforceClient.fetchPersonIdents(
-                objectName = entity,
-                personIdentSelectClause = uriEventFilterHelper.objectsToBeLogged.getProperty(entity),
-                recordIds = events.map { it.recordId }
-            )
-            totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls
-            val (uriEventsWithPersonIdent, uriEventsWithoutAnyPersonIdents) = setUriEventsWithAndWithoutPersonIdent(events, personIdentsResponse)
-            totalNumberOfLoggedRecords += uriEventsWithPersonIdent.toInt()
+        try {
 
-            if (uriEventsWithPersonIdent> 0) {
-                Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsWithPersonIdent)
-                log.info() { "Logging ${uriEventsWithPersonIdent.toInt()} metrics entity $entity" }
-                postgresDatabase.upsertAuditLogSyncStatus(eventDate, LocalDate.now(), entity, uriEventsWithPersonIdent.toInt())
+            Metrics.clearUriEventsCounter()
+            val filteredUriEvents =
+                uriEventFilterHelper.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents(eventDate))
+            log.info { "Filtered ${filteredUriEvents.size} URI events" }
+            filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
+                val personIdentsResponse = salesforceClient.fetchPersonIdents(
+                    objectName = entity,
+                    personIdentSelectClause = uriEventFilterHelper.objectsToBeLogged.getProperty(entity),
+                    recordIds = events.map { it.recordId }
+                )
+                totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls
+                val (uriEventsWithPersonIdent, uriEventsWithoutAnyPersonIdents) = setUriEventsWithAndWithoutPersonIdent(
+                    events,
+                    personIdentsResponse
+                )
+                totalNumberOfLoggedRecords += uriEventsWithPersonIdent.toInt()
+
+                if (uriEventsWithPersonIdent > 0) {
+                    Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsWithPersonIdent)
+                    log.info() { "Logging ${uriEventsWithPersonIdent.toInt()} metrics entity $entity" }
+                    postgresDatabase.upsertAuditLogSyncStatus(
+                        eventDate,
+                        LocalDate.now(),
+                        entity,
+                        uriEventsWithPersonIdent.toInt()
+                    )
+                }
+                if (uriEventsWithoutAnyPersonIdents > 0) {
+                    Metrics.uriEventsWithoutAnyPersonIdents.labels(entity).inc(uriEventsWithoutAnyPersonIdents)
+                }
             }
-            if (uriEventsWithoutAnyPersonIdents> 0) {
-                Metrics.uriEventsWithoutAnyPersonIdents.labels(entity).inc(uriEventsWithoutAnyPersonIdents)
+            if (totalNumberOfLoggedRecords == 0) {
+                log.warn { "No audit logs to log for $eventDate" }
             }
+            Metrics.numberOfApiCalls.labels("RequestPersonIdents").inc(totalNumberOfApiCalls.toDouble())
+        } catch (e: Exception) {
+            log.error { "Error while fetching and logging audit logs " + e.message }
+        } finally {
+            active = false
         }
-        if (totalNumberOfLoggedRecords == 0) {
-            log.warn { "No audit logs to log for $eventDate" }
-        }
-        Metrics.numberOfApiCalls.labels("RequestPersonIdents").inc(totalNumberOfApiCalls.toDouble())
         return totalNumberOfLoggedRecords.toInt()
     }
 
