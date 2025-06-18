@@ -46,20 +46,27 @@ class DefaultPostgresDatabase : PostgresDatabase {
     }
 
     override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, entity: String, numberOfRecords: Int): AuditLogSyncStatus? {
-        val dataSource = HikariDataSource(hikariConfig())
-        val database = Database.connect(dataSource)
-        val result = transaction(database) {
-            AuditLogSyncStatusTable.upsert(
-                keys = arrayOf(AuditLogSyncStatusTable.eventDate, AuditLogSyncStatusTable.entity)
-            ) {
-                it[AuditLogSyncStatusTable.eventDate] = eventDate
-                it[AuditLogSyncStatusTable.syncDate] = syncDate
-                it[AuditLogSyncStatusTable.entity] = entity
-                it[AuditLogSyncStatusTable.numberOfRecords] = numberOfRecords
-            }
-        }.resultedValues?.firstOrNull()?.toAuditLogSyncStatus()
-        dataSource.close()
-        return result
+        try {
+            log.info { "Upserting audit log sync status for eventDate: $eventDate, entity: $entity, numberOfRecords: $numberOfRecords" }
+            val dataSource = HikariDataSource(hikariConfig())
+            val database = Database.connect(dataSource)
+            val result = transaction(database) {
+                AuditLogSyncStatusTable.upsert(
+                    keys = arrayOf(AuditLogSyncStatusTable.eventDate, AuditLogSyncStatusTable.entity)
+                ) {
+                    it[AuditLogSyncStatusTable.eventDate] = eventDate
+                    it[AuditLogSyncStatusTable.syncDate] = syncDate
+                    it[AuditLogSyncStatusTable.entity] = entity
+                    it[AuditLogSyncStatusTable.numberOfRecords] = numberOfRecords
+                }
+            }.resultedValues?.firstOrNull()?.toAuditLogSyncStatus()
+            log.info { "Finnish upserting  $entity with , $numberOfRecords records" }
+            dataSource.close()
+            return result
+        } catch (e: Exception) {
+            log.error(e) { "Error while upserting audit log sync status for eventDate: $eventDate, entity: $entity" }
+            return null
+        }
     }
 
     override fun fetchAuditLogSyncStatus(eventDate: LocalDate): List<AuditLogSyncStatus> {
