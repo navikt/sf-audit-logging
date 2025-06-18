@@ -10,7 +10,7 @@ import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import no.nav.sf.audit.logging.salesforce.UriEvent
 import java.time.LocalDate
 
-object AuditLog {
+object AuditLogJob {
 
     private val log = KotlinLogging.logger { }
     private val naudit = KotlinLogging.logger("AuditLogger")
