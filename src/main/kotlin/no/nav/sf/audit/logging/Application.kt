@@ -52,7 +52,7 @@ object Application {
             Response(OK).body("Audit log job is already active, cannot start a new one")
         } else {
             AuditLogJob.activateFetchAndLog(eventDate, entity)
-            Response(OK).body("Finished logging for event date $eventDate and entity $entity")
+            Response(OK).body("Start logging for event date $eventDate and entity $entity")
         }
     }
 

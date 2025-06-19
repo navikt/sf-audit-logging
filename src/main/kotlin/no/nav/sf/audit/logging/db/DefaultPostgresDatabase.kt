@@ -60,7 +60,6 @@ class DefaultPostgresDatabase : PostgresDatabase {
                     it[AuditLogSyncStatusTable.numberOfRecords] = numberOfRecords
                 }
             }.resultedValues?.firstOrNull()?.toAuditLogSyncStatus()
-            log.info { "Finnish upserting  $entity with , $numberOfRecords records" }
             dataSource.close()
             return result
         } catch (e: Exception) {

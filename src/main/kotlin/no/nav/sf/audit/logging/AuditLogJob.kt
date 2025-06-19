@@ -96,7 +96,7 @@ object AuditLogJob {
             if (personIdent != null) {
                 event.personIdent = personIdent
                 uriEventsWithPersonIdent += 1.0
-                // naudit.info(createLogMessage(event))
+                naudit.info(createLogMessage(event))
                 batchCounter++
                 if (batchCounter == 100) {
                     Thread.sleep(2000) // Pause for 2 seconds
