@@ -7,7 +7,6 @@ import no.nav.sf.audit.logging.Application
 import no.nav.sf.audit.logging.env
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -75,23 +74,6 @@ class DefaultPostgresDatabase : PostgresDatabase {
             AuditLogSyncStatusTable.selectAll()
                 .where {
                     (AuditLogSyncStatusTable.eventDate eq eventDate)
-                }
-                .map { it.toAuditLogSyncStatus() }
-        }
-        dataSource.close()
-        return result
-    }
-
-    override fun fetchAuditLogSyncStatusByEntity(
-        eventDate: LocalDate,
-        entity: String
-    ): List<AuditLogSyncStatus> {
-        val dataSource = HikariDataSource(hikariConfig())
-        val database = Database.connect(dataSource)
-        val result = transaction(database) {
-            AuditLogSyncStatusTable.selectAll()
-                .where {
-                    (AuditLogSyncStatusTable.eventDate eq eventDate) and (AuditLogSyncStatusTable.entity eq entity)
                 }
                 .map { it.toAuditLogSyncStatus() }
         }

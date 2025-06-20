@@ -185,9 +185,6 @@ class AuditLogJobTest {
         every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
 
         every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
-        every { postgresDatabase.fetchAuditLogSyncStatusByEntity(any(), "Account") }.returns(
-            emptyList()
-        )
 
         val personIdentByRecordId = mapOf(
             "1" to "12345678901",
@@ -222,31 +219,6 @@ class AuditLogJobTest {
 
         AuditLogJob.fetchAndLog(LocalDate.now(), "All", salesforceClient, postgresDatabase)
         verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 1) }
-        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Case", 1) }
-    }
-
-    @Test
-    fun `Should ignore all entities except case when the entity is set to case`() {
-        val uriEvents = mutableListOf<UriEvent>()
-        uriEvents.add(TestDataFactory.getUriEvent(1, "Account"))
-        uriEvents.add(TestDataFactory.getUriEvent(2, "Case"))
-
-        val mockCounterChild = mockk<Counter.Child>(relaxed = true)
-        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Case") } returns mockCounterChild
-        every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
-
-        every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
-        every { postgresDatabase.fetchAuditLogSyncStatusByEntity(any(), "Case") }.returns(emptyList())
-
-        val personIdentByRecordId = mapOf(
-            "1" to "12345678901",
-            "2" to "12345678902"
-        )
-        val personIdentResponse = PersonIdentsResponse("Case", 1, personIdentByRecordId)
-        every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
-
-        AuditLogJob.fetchAndLog(LocalDate.now(), "Case", salesforceClient, postgresDatabase)
-        verify(exactly = 0) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 1) }
         verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Case", 1) }
     }
 }

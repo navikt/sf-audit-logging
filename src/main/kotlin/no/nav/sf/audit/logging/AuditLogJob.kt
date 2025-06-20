@@ -31,16 +31,11 @@ object AuditLogJob {
         var totalNumberOfLoggedRecords = 0
         var totalNumberOfApiCalls = 0
 
-        val successfulLoggedForEventDate =
-            if (entity == "All") postgresDatabase.fetchAuditLogSyncStatus(eventDate) else postgresDatabase.fetchAuditLogSyncStatusByEntity(
-                eventDate,
-                entity
-            )
-        if (successfulLoggedForEventDate.isNotEmpty()) {
-            // Stop if we have already logged audit logs for the event date
+        if (entity == "All" && postgresDatabase.fetchAuditLogSyncStatus(eventDate).isNotEmpty()) {
             active = false
             throw IllegalStateException("Audit logs have already been logged for $eventDate")
         }
+
         log.info { "Fetch and log audit logs for $eventDate" }
         try {
 
@@ -99,7 +94,7 @@ object AuditLogJob {
                 naudit.info(createLogMessage(event))
                 batchCounter++
                 if (batchCounter == 100) {
-                    Thread.sleep(2000) // Pause for 2 seconds
+                    Thread.sleep(3000) // Pause for 3 seconds
                     batchCounter = 0
                 }
             } else {

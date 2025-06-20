@@ -24,15 +24,4 @@ class MockPostgresDatabase : PostgresDatabase {
             AuditLogSyncStatus(eventDate, LocalDate.now(), "Account", 10)
         )
     }
-
-    override fun fetchAuditLogSyncStatusByEntity(
-        eventDate: LocalDate,
-        entity: String
-    ): List<AuditLogSyncStatus> {
-        return if (entity == "Account") {
-            listOf(AuditLogSyncStatus(eventDate, LocalDate.now(), "Account", 5))
-        } else {
-            emptyList()
-        }
-    }
 }
