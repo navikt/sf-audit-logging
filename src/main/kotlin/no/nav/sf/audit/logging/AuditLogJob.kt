@@ -107,7 +107,6 @@ object AuditLogJob {
                 uriEventsWithoutAnyPersonIdents += 1.0
             }
         }
-        log.info() { "Total URI events with person ident: $uriEventsWithPersonIdent, without any person idents: $uriEventsWithoutAnyPersonIdents" }
         return Pair(uriEventsWithPersonIdent, uriEventsWithoutAnyPersonIdents)
     }
 }
