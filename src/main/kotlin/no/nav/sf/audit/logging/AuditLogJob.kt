@@ -52,7 +52,8 @@ object AuditLogJob {
                 totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls
                 val (uriEventsWithPersonIdent, uriEventsWithoutAnyPersonIdents) = setUriEventsWithAndWithoutPersonIdent(
                     events,
-                    personIdentsResponse
+                    personIdentsResponse,
+                    offset
                 )
                 totalNumberOfLoggedRecords += uriEventsWithPersonIdent.toInt()
 
@@ -82,13 +83,18 @@ object AuditLogJob {
         return totalNumberOfLoggedRecords.toInt()
     }
 
-    private fun setUriEventsWithAndWithoutPersonIdent(events: List<UriEvent>, personIdentsResponse: PersonIdentsResponse): Pair<Double, Double> {
+    private fun setUriEventsWithAndWithoutPersonIdent(events: List<UriEvent>, personIdentsResponse: PersonIdentsResponse, offset: Int): Pair<Double, Double> {
         var uriEventsWithPersonIdent = 0.0
         var uriEventsWithoutAnyPersonIdents = 0.0
         var batchCounter = 0
+        var indexForOffset = 0
         events.forEach { event ->
             val personIdent = personIdentsResponse.personIdentByRecordId[event.recordId]
             if (personIdent != null) {
+                indexForOffset++
+                if (indexForOffset - 1 < offset) {
+                    return@forEach // Skip this event if it is before the offset
+                }
                 event.personIdent = personIdent
                 uriEventsWithPersonIdent += 1.0
                 naudit.info(createLogMessage(event))
