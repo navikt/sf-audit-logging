@@ -7,11 +7,12 @@ import no.nav.sf.audit.logging.Application
 import no.nav.sf.audit.logging.env
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.upsert
 import java.time.LocalDate
+import kotlin.text.set
 
 const val NAIS_DB_PREFIX = "NAIS_DATABASE_SF_AUDIT_LOGGING_SF_AUDIT_LOGGING_"
 
@@ -44,27 +45,30 @@ class DefaultPostgresDatabase : PostgresDatabase {
         return result
     }
 
-    override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, entity: String, numberOfRecords: Int): AuditLogSyncStatus? {
+    override fun insertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, entity: String, numberOfRecords: Int): Boolean {
+        var result = false
+        val dataSource = HikariDataSource(hikariConfig())
         try {
             log.info { "Upserting audit log sync status for eventDate: $eventDate, entity: $entity, numberOfRecords: $numberOfRecords" }
-            val dataSource = HikariDataSource(hikariConfig())
             val database = Database.connect(dataSource)
-            val result = transaction(database) {
-                AuditLogSyncStatusTable.upsert(
-                    keys = arrayOf(AuditLogSyncStatusTable.eventDate, AuditLogSyncStatusTable.entity)
-                ) {
+            val newId = java.util.UUID.randomUUID()
+            transaction(database) {
+                AuditLogSyncStatusTable.insert {
+                    it[AuditLogSyncStatusTable.id] = newId
                     it[AuditLogSyncStatusTable.eventDate] = eventDate
                     it[AuditLogSyncStatusTable.syncDate] = syncDate
                     it[AuditLogSyncStatusTable.entity] = entity
                     it[AuditLogSyncStatusTable.numberOfRecords] = numberOfRecords
                 }
-            }.resultedValues?.firstOrNull()?.toAuditLogSyncStatus()
-            dataSource.close()
-            return result
+            }
+            log.info { "Finish upsering audit log sync status for eventDate: $eventDate, entity: $entity, numberOfRecords: $numberOfRecords" }
+            result = true
         } catch (e: Exception) {
             log.error(e) { "Error while upserting audit log sync status for eventDate: $eventDate, entity: $entity" }
-            return null
+        } finally {
+            dataSource.close()
         }
+        return result
     }
 
     override fun fetchAuditLogSyncStatus(eventDate: LocalDate): List<AuditLogSyncStatus> {

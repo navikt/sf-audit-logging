@@ -15,8 +15,8 @@ class MockPostgresDatabase : PostgresDatabase {
             .toMutableMap()
     }
 
-    override fun upsertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, entity: String, numberOfRecords: Int): AuditLogSyncStatus? {
-        return null
+    override fun insertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, entity: String, numberOfRecords: Int): Boolean {
+        return true
     }
 
     override fun fetchAuditLogSyncStatus(eventDate: LocalDate): List<AuditLogSyncStatus> {

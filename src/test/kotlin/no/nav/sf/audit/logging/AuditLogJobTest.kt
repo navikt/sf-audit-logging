@@ -24,7 +24,7 @@ class AuditLogJobTest {
     @BeforeEach
     fun setup() {
         mockkObject(Metrics)
-        every { postgresDatabase.upsertAuditLogSyncStatus(any(), any(), any(), any()) }.returns(null)
+        every { postgresDatabase.insertAuditLogSyncStatus(any(), any(), any(), any()) } returns true
         every { postgresDatabase.fetchAuditLogSyncStatus(any()) }.returns(emptyList())
     }
 
@@ -139,7 +139,7 @@ class AuditLogJobTest {
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
         AuditLogJob.fetchAndLog(LocalDate.now(), "All", 0, salesforceClient, postgresDatabase)
-        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 2) }
+        verify(exactly = 1) { postgresDatabase.insertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 2) }
     }
 
     @Test
@@ -194,7 +194,7 @@ class AuditLogJobTest {
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
         AuditLogJob.fetchAndLog(LocalDate.now(), "Account", 0, salesforceClient, postgresDatabase)
-        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 2) }
+        verify(exactly = 1) { postgresDatabase.insertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 2) }
     }
 
     @Test
@@ -218,7 +218,7 @@ class AuditLogJobTest {
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
         AuditLogJob.fetchAndLog(LocalDate.now(), "All", 0, salesforceClient, postgresDatabase)
-        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 1) }
-        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Case", 1) }
+        verify(exactly = 1) { postgresDatabase.insertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 1) }
+        verify(exactly = 1) { postgresDatabase.insertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Case", 1) }
     }
 }

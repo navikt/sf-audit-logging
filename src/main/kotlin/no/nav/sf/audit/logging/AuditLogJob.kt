@@ -59,7 +59,7 @@ object AuditLogJob {
                 if (uriEventsWithPersonIdent > 0) {
                     Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsWithPersonIdent)
                     log.info() { "Logging ${uriEventsWithPersonIdent.toInt()} metrics entity $entity" }
-                    postgresDatabase.upsertAuditLogSyncStatus(
+                    postgresDatabase.insertAuditLogSyncStatus(
                         eventDate,
                         LocalDate.now(),
                         entity,
