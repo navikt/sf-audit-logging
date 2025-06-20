@@ -18,15 +18,15 @@ object AuditLogJob {
     private val log = KotlinLogging.logger { }
     private val naudit = KotlinLogging.logger("AuditLogger")
 
-    fun activateFetchAndLog(eventDate: LocalDate, entity: String, salesforceClient: SalesforceClient = DefaultSalesforceClient(), postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()) {
+    fun activateFetchAndLog(eventDate: LocalDate, entity: String, offset: Int, salesforceClient: SalesforceClient = DefaultSalesforceClient(), postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()) {
         if (active) throw IllegalStateException("Cannot activate new job since one is already active")
         active = true
         GlobalScope.launch {
-            fetchAndLog(eventDate, entity, salesforceClient, postgresDatabase)
+            fetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase)
         }
     }
 
-    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase): Int {
+    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", offset: Int = 0, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase): Int {
         val uriEventFilterHelper = UriEventFilterHelper(entity)
         var totalNumberOfLoggedRecords = 0
         var totalNumberOfApiCalls = 0
