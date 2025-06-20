@@ -16,14 +16,11 @@ data class AuditLogSyncStatus(
 )
 
 object AuditLogSyncStatusTable : Table("audit_log_status") {
+    val id = uuid("id").autoGenerate().uniqueIndex()
     val eventDate = date("event_date")
     val syncDate = date("sync_date")
     val entity = varchar("salesforce_object", 43)
     val numberOfRecords = integer("number_of_records")
-
-    init {
-        uniqueIndex(eventDate, entity) // Enforces unique combinations of eventDate and Salesforce Object
-    }
 }
 
 fun ResultRow.toAuditLogSyncStatus() = AuditLogSyncStatus(

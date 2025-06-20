@@ -24,7 +24,7 @@ class AuditLogJobTest {
     @BeforeEach
     fun setup() {
         mockkObject(Metrics)
-        every { postgresDatabase.upsertAuditLogSyncStatus(any(), any(), any(), any()) }.returns(null)
+        every { postgresDatabase.insertAuditLogSyncStatus(any(), any(), any(), any()) } returns true
         every { postgresDatabase.fetchAuditLogSyncStatus(any()) }.returns(emptyList())
     }
 
@@ -43,7 +43,7 @@ class AuditLogJobTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result = AuditLogJob.fetchAndLog(LocalDate.now(), "All", salesforceClient, postgresDatabase)
+        val result = AuditLogJob.fetchAndLog(LocalDate.now(), "All", 0, salesforceClient, postgresDatabase)
         assertEquals(uriEvents.size, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
@@ -65,7 +65,7 @@ class AuditLogJobTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result = AuditLogJob.fetchAndLog(LocalDate.now(), "All", salesforceClient, postgresDatabase)
+        val result = AuditLogJob.fetchAndLog(LocalDate.now(), "All", 0, salesforceClient, postgresDatabase)
         assertEquals(1, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
@@ -88,7 +88,7 @@ class AuditLogJobTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result = AuditLogJob.fetchAndLog(LocalDate.now(), "All", salesforceClient, postgresDatabase)
+        val result = AuditLogJob.fetchAndLog(LocalDate.now(), "All", 0, salesforceClient, postgresDatabase)
         assertEquals(2, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
@@ -113,7 +113,7 @@ class AuditLogJobTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        val result = AuditLogJob.fetchAndLog(LocalDate.now(), "All", salesforceClient, postgresDatabase)
+        val result = AuditLogJob.fetchAndLog(LocalDate.now(), "All", 0, salesforceClient, postgresDatabase)
         assertEquals(0, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") }
@@ -138,8 +138,8 @@ class AuditLogJobTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        AuditLogJob.fetchAndLog(LocalDate.now(), "All", salesforceClient, postgresDatabase)
-        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 2) }
+        AuditLogJob.fetchAndLog(LocalDate.now(), "All", 0, salesforceClient, postgresDatabase)
+        verify(exactly = 1) { postgresDatabase.insertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 2) }
     }
 
     @Test
@@ -171,7 +171,7 @@ class AuditLogJobTest {
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
         assertThrows<IllegalStateException> {
-            AuditLogJob.fetchAndLog(LocalDate.now(), "All", salesforceClient, postgresDatabase)
+            AuditLogJob.fetchAndLog(LocalDate.now(), "All", 0, salesforceClient, postgresDatabase)
         }
     }
 
@@ -193,8 +193,8 @@ class AuditLogJobTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        AuditLogJob.fetchAndLog(LocalDate.now(), "Account", salesforceClient, postgresDatabase)
-        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 2) }
+        AuditLogJob.fetchAndLog(LocalDate.now(), "Account", 0, salesforceClient, postgresDatabase)
+        verify(exactly = 1) { postgresDatabase.insertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 2) }
     }
 
     @Test
@@ -217,8 +217,31 @@ class AuditLogJobTest {
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
         every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
 
-        AuditLogJob.fetchAndLog(LocalDate.now(), "All", salesforceClient, postgresDatabase)
-        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 1) }
-        verify(exactly = 1) { postgresDatabase.upsertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Case", 1) }
+        AuditLogJob.fetchAndLog(LocalDate.now(), "All", 0, salesforceClient, postgresDatabase)
+        verify(exactly = 1) { postgresDatabase.insertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 1) }
+        verify(exactly = 1) { postgresDatabase.insertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Case", 1) }
+    }
+
+    @Test
+    fun `Should log one record when offset is 2 of 3`() {
+        val uriEvents = TestDataFactory.getUriEvents(3)
+
+        val mockCounterChild = mockk<Counter.Child>(relaxed = true)
+        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
+        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
+        every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
+
+        every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
+
+        val personIdentByRecordId = mapOf(
+            "1" to "12345678901",
+            "2" to "12345678902",
+            "3" to "12345678903"
+        )
+        val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
+        every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
+
+        AuditLogJob.fetchAndLog(LocalDate.now(), "All", 2, salesforceClient, postgresDatabase)
+        verify(exactly = 1) { postgresDatabase.insertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 1) }
     }
 }

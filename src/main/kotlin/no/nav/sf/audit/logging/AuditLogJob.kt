@@ -18,15 +18,15 @@ object AuditLogJob {
     private val log = KotlinLogging.logger { }
     private val naudit = KotlinLogging.logger("AuditLogger")
 
-    fun activateFetchAndLog(eventDate: LocalDate, entity: String, salesforceClient: SalesforceClient = DefaultSalesforceClient(), postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()) {
+    fun activateFetchAndLog(eventDate: LocalDate, entity: String, offset: Int, salesforceClient: SalesforceClient = DefaultSalesforceClient(), postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()) {
         if (active) throw IllegalStateException("Cannot activate new job since one is already active")
         active = true
         GlobalScope.launch {
-            fetchAndLog(eventDate, entity, salesforceClient, postgresDatabase)
+            fetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase)
         }
     }
 
-    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase): Int {
+    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", offset: Int = 0, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase): Int {
         val uriEventFilterHelper = UriEventFilterHelper(entity)
         var totalNumberOfLoggedRecords = 0
         var totalNumberOfApiCalls = 0
@@ -52,14 +52,15 @@ object AuditLogJob {
                 totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls
                 val (uriEventsWithPersonIdent, uriEventsWithoutAnyPersonIdents) = setUriEventsWithAndWithoutPersonIdent(
                     events,
-                    personIdentsResponse
+                    personIdentsResponse,
+                    offset
                 )
                 totalNumberOfLoggedRecords += uriEventsWithPersonIdent.toInt()
 
                 if (uriEventsWithPersonIdent > 0) {
                     Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsWithPersonIdent)
                     log.info() { "Logging ${uriEventsWithPersonIdent.toInt()} metrics entity $entity" }
-                    postgresDatabase.upsertAuditLogSyncStatus(
+                    postgresDatabase.insertAuditLogSyncStatus(
                         eventDate,
                         LocalDate.now(),
                         entity,
@@ -82,13 +83,18 @@ object AuditLogJob {
         return totalNumberOfLoggedRecords.toInt()
     }
 
-    private fun setUriEventsWithAndWithoutPersonIdent(events: List<UriEvent>, personIdentsResponse: PersonIdentsResponse): Pair<Double, Double> {
+    private fun setUriEventsWithAndWithoutPersonIdent(events: List<UriEvent>, personIdentsResponse: PersonIdentsResponse, offset: Int): Pair<Double, Double> {
         var uriEventsWithPersonIdent = 0.0
         var uriEventsWithoutAnyPersonIdents = 0.0
         var batchCounter = 0
+        var indexForOffset = 0
         events.forEach { event ->
             val personIdent = personIdentsResponse.personIdentByRecordId[event.recordId]
             if (personIdent != null) {
+                indexForOffset++
+                if (indexForOffset - 1 < offset) {
+                    return@forEach // Skip this event if it is before the offset
+                }
                 event.personIdent = personIdent
                 uriEventsWithPersonIdent += 1.0
                 naudit.info(createLogMessage(event))
