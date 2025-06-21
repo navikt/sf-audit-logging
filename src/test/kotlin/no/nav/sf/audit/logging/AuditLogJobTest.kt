@@ -198,7 +198,7 @@ class AuditLogJobTest {
     }
 
     @Test
-    fun `Should create two audit log records in postgres when uri events for account and case`() {
+    fun `Should create one audit log records in postgres when uri events for account and case due to cas is excluded when fetching all entities`() {
         val uriEvents = mutableListOf<UriEvent>()
         uriEvents.add(TestDataFactory.getUriEvent(1, "Account"))
         uriEvents.add(TestDataFactory.getUriEvent(2, "Case"))
@@ -219,7 +219,32 @@ class AuditLogJobTest {
 
         AuditLogJob.fetchAndLog(LocalDate.now(), "All", 0, salesforceClient, postgresDatabase)
         verify(exactly = 1) { postgresDatabase.insertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 1) }
-        verify(exactly = 1) { postgresDatabase.insertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Case", 1) }
+        verify(exactly = 0) { postgresDatabase.insertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Case", 1) }
+    }
+
+    @Test
+    fun `Should create two audit log records in postgres when uri events for account and work order`() {
+        val uriEvents = mutableListOf<UriEvent>()
+        uriEvents.add(TestDataFactory.getUriEvent(1, "Account"))
+        uriEvents.add(TestDataFactory.getUriEvent(2, "WorkOrder"))
+
+        val mockCounterChild = mockk<Counter.Child>(relaxed = true)
+        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
+        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("WorkOrder") } returns mockCounterChild
+        every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
+
+        every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
+
+        val personIdentByRecordId = mapOf(
+            "1" to "12345678901",
+            "2" to "12345678902"
+        )
+        val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
+        every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
+
+        AuditLogJob.fetchAndLog(LocalDate.now(), "All", 0, salesforceClient, postgresDatabase)
+        verify(exactly = 1) { postgresDatabase.insertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 1) }
+        verify(exactly = 1) { postgresDatabase.insertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "WorkOrder", 1) }
     }
 
     @Test
