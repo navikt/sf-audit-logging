@@ -32,7 +32,7 @@ jobs:
       - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-gcp
-          RESOURCE: .nais/job.yaml
+          RESOURCE: .nais/job.yaml,.nais/caseJob.yaml
           VAR: image=${{ needs.build.outputs.image }}
   deploy-prod:
     name: Deploy job to prod-gcp
