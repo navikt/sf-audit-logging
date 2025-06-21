@@ -40,6 +40,7 @@ spec:
     inbound:
       rules:
         - application: audit-logging-fetch-and-log-job
+        - application: audit-logging-fetch-and-log-job-for-cases
     outbound:
       external:
         - host: navdialog.my.salesforce.com
