@@ -1,0 +1,18 @@
+apiVersion: nais.io/v1
+kind: Naisjob
+metadata:
+  name: audit-logging-fetch-and-log-job-for-cases
+  namespace: teamcrm
+  labels:
+    team: teamcrm
+spec:
+  schedule: "0 4 * * *"  # This will run the job every day at 04:00 AM UTC (05:00 AM CET)
+  image: "{{ image }}" # Will use cgr.dev/chainguard/curl:latest via Dockerfile-job
+  accessPolicy:
+    outbound:
+      rules:
+        - application: sf-audit-logging
+  command:
+    - curl
+    - http://sf-audit-logging/internal/fetchAndLog?entity=case
+  restartPolicy: Never

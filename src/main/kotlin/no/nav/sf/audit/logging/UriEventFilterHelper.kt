@@ -21,10 +21,16 @@ class UriEventFilterHelper(val entity: String) {
             log.error(e) { "Failed to load objects.yaml" }
             Properties()
         }
+        val filteredObjects = Properties()
         return if (entity == "All") {
-            allObjects
+            // "All" should not include Case. Cases are running in a separate job
+            allObjects.forEach { key, value ->
+                if (key.toString() != "Case") {
+                    filteredObjects[key] = value
+                }
+            }
+            filteredObjects
         } else {
-            val filteredObjects = Properties()
             allObjects.forEach { key, value ->
                 if (key.toString() == entity) {
                     filteredObjects[key] = value
