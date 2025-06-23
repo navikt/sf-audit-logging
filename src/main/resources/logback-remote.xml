@@ -3,7 +3,7 @@
     <appender name="AuditLogger" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
         <destination>audit.nais:6514</destination>
         <writeBufferSize>128000</writeBufferSize>
-        <ringBufferSize>131072</ringBufferSize>
+        <ringBufferSize>32768</ringBufferSize>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>${HOSTNAME} sf-audit: %msg%n</pattern>
         </encoder>
