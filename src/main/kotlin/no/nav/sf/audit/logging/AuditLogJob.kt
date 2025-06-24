@@ -100,7 +100,7 @@ object AuditLogJob {
                 naudit.info(createLogMessage(event))
                 batchCounter++
                 if (batchCounter == 100) {
-                    Thread.sleep(3000) // Pause for 3 seconds
+                    Thread.sleep(2000) // Pause for 2 seconds
                     batchCounter = 0
                 }
             } else {
