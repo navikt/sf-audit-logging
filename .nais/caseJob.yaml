@@ -14,5 +14,5 @@ spec:
         - application: sf-audit-logging
   command:
     - curl
-    - http://sf-audit-logging/internal/fetchAndLog?entity=case
+    - http://sf-audit-logging/internal/fetchAndLog?entity=Case
   restartPolicy: Never
