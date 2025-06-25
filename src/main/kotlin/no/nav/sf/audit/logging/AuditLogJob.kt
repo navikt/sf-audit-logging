@@ -1,8 +1,10 @@
 package no.nav.sf.audit.logging
 
+import ch.qos.logback.classic.LoggerContext
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
+import net.logstash.logback.appender.LogstashTcpSocketAppender
 import no.nav.sf.audit.logging.db.DefaultPostgresDatabase
 import no.nav.sf.audit.logging.db.MockPostgresDatabase
 import no.nav.sf.audit.logging.db.PostgresDatabase
@@ -10,6 +12,7 @@ import no.nav.sf.audit.logging.salesforce.DefaultSalesforceClient
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import no.nav.sf.audit.logging.salesforce.UriEvent
+import org.slf4j.LoggerFactory
 import java.time.LocalDate
 
 object AuditLogJob {
@@ -18,9 +21,35 @@ object AuditLogJob {
     private val log = KotlinLogging.logger { }
     private val naudit = KotlinLogging.logger("AuditLogger")
 
+    private fun getAuditAppender(): LogstashTcpSocketAppender? {
+        val ctx = LoggerFactory.getILoggerFactory() as? LoggerContext ?: return null
+        return ctx.getLogger("AuditLogger").getAppender("AuditLogger") as? LogstashTcpSocketAppender
+    }
+
+    fun startAuditAppender() {
+        getAuditAppender()?.apply {
+            if (!isStarted) {
+                log.info { "Actively starting audit appender" }
+                start()
+                Thread.sleep(2000) // Extra margin for asynchronus threads etc to be ready
+                log.info { "Audit appender signals isStarted $isStarted" }
+            }
+        }
+    }
+
+    fun stopAuditAppender() {
+        getAuditAppender()?.apply {
+            if (isStarted) {
+                log.info { "Actively stopping audit appender" }
+                stop()
+            }
+        }
+    }
+
     fun activateFetchAndLog(eventDate: LocalDate, entity: String, offset: Int, salesforceClient: SalesforceClient = DefaultSalesforceClient(), postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()) {
         if (active) throw IllegalStateException("Cannot activate new job since one is already active")
         active = true
+        startAuditAppender()
         GlobalScope.launch {
             fetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase)
         }
@@ -33,6 +62,7 @@ object AuditLogJob {
 
         if (entity == "All" && postgresDatabase.fetchAuditLogSyncStatus(eventDate).isNotEmpty()) {
             active = false
+            stopAuditAppender()
             throw IllegalStateException("Audit logs have already been logged for $eventDate")
         }
 
@@ -79,6 +109,7 @@ object AuditLogJob {
             log.error { "Error while fetching and logging audit logs " + e.message }
         } finally {
             active = false
+            stopAuditAppender()
         }
         return totalNumberOfLoggedRecords.toInt()
     }
