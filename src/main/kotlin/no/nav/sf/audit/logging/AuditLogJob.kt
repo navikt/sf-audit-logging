@@ -43,50 +43,38 @@ object AuditLogJob {
             val filteredUriEvents =
                 uriEventFilterHelper.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents(eventDate))
             log.info { "Filtered ${filteredUriEvents.size} URI events" }
-            for (dryRun in listOf(true, false)) {
-                totalNumberOfLoggedRecords = 0
-                totalNumberOfApiCalls = 0
-                filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
-                    val personIdentsResponse = salesforceClient.fetchPersonIdents(
-                        objectName = entity,
-                        personIdentSelectClause = uriEventFilterHelper.objectsToBeLogged.getProperty(entity),
-                        recordIds = events.map { it.recordId }
-                    )
-                    totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls
-                    val (uriEventsWithPersonIdent, uriEventsWithoutAnyPersonIdents) = setUriEventsWithAndWithoutPersonIdent(
-                        events,
-                        personIdentsResponse,
-                        offset
-                    )
-                    totalNumberOfLoggedRecords += uriEventsWithPersonIdent.toInt()
+            filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
+                val personIdentsResponse = salesforceClient.fetchPersonIdents(
+                    objectName = entity,
+                    personIdentSelectClause = uriEventFilterHelper.objectsToBeLogged.getProperty(entity),
+                    recordIds = events.map { it.recordId }
+                )
+                totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls
+                val (uriEventsWithPersonIdent, uriEventsWithoutAnyPersonIdents) = setUriEventsWithAndWithoutPersonIdent(
+                    events,
+                    personIdentsResponse,
+                    offset
+                )
+                totalNumberOfLoggedRecords += uriEventsWithPersonIdent.toInt()
 
-                    if (dryRun) {
-                        log.info { "About to log ${uriEventsWithPersonIdent.toInt()} of entity $entity" }
-                    } else {
-                        if (uriEventsWithPersonIdent > 0) {
-                            Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsWithPersonIdent)
-                            log.info() { "Logging ${uriEventsWithPersonIdent.toInt()} metrics entity $entity" }
-                            postgresDatabase.insertAuditLogSyncStatus(
-                                eventDate,
-                                LocalDate.now(),
-                                entity,
-                                uriEventsWithPersonIdent.toInt()
-                            )
-                        }
-                        if (uriEventsWithoutAnyPersonIdents > 0) {
-                            Metrics.uriEventsWithoutAnyPersonIdents.labels(entity).inc(uriEventsWithoutAnyPersonIdents)
-                        }
-                    }
+                if (uriEventsWithPersonIdent > 0) {
+                    Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsWithPersonIdent)
+                    log.info() { "Logging ${uriEventsWithPersonIdent.toInt()} metrics entity $entity" }
+                    postgresDatabase.insertAuditLogSyncStatus(
+                        eventDate,
+                        LocalDate.now(),
+                        entity,
+                        uriEventsWithPersonIdent.toInt()
+                    )
                 }
-                if (dryRun) {
-                    log.info { "Summary: About to log a total of $totalNumberOfLoggedRecords events" }
-                } else {
-                    if (totalNumberOfLoggedRecords == 0) {
-                        log.warn { "No audit logs to log for $eventDate" }
-                    }
-                    Metrics.numberOfApiCalls.labels("RequestPersonIdents").inc(totalNumberOfApiCalls.toDouble())
+                if (uriEventsWithoutAnyPersonIdents > 0) {
+                    Metrics.uriEventsWithoutAnyPersonIdents.labels(entity).inc(uriEventsWithoutAnyPersonIdents)
                 }
             }
+            if (totalNumberOfLoggedRecords == 0) {
+                log.warn { "No audit logs to log for $eventDate" }
+            }
+            Metrics.numberOfApiCalls.labels("RequestPersonIdents").inc(totalNumberOfApiCalls.toDouble())
         } catch (e: Exception) {
             log.error { "Error while fetching and logging audit logs " + e.message }
         } finally {
@@ -95,7 +83,7 @@ object AuditLogJob {
         return totalNumberOfLoggedRecords.toInt()
     }
 
-    private fun setUriEventsWithAndWithoutPersonIdent(events: List<UriEvent>, personIdentsResponse: PersonIdentsResponse, offset: Int, dryRun: Boolean = false): Pair<Double, Double> {
+    private fun setUriEventsWithAndWithoutPersonIdent(events: List<UriEvent>, personIdentsResponse: PersonIdentsResponse, offset: Int): Pair<Double, Double> {
         var uriEventsWithPersonIdent = 0.0
         var uriEventsWithoutAnyPersonIdents = 0.0
         var batchCounter = 0
@@ -109,10 +97,10 @@ object AuditLogJob {
                 }
                 event.personIdent = personIdent
                 uriEventsWithPersonIdent += 1.0
-                if (!dryRun) naudit.info(createLogMessage(event))
+                naudit.info(createLogMessage(event))
                 batchCounter++
                 if (batchCounter == 100) {
-                    if (!dryRun) Thread.sleep(2000) // Pause for 2 seconds
+                    Thread.sleep(2000) // Pause for 2 seconds
                     batchCounter = 0
                 }
             } else {
