@@ -1,8 +1,10 @@
 package no.nav.sf.audit.logging
 
 import mu.KotlinLogging
-import no.nav.sf.audit.logging.db.DefaultPostgresDatabase
+import no.nav.sf.audit.logging.db.PostgresDatabase
 import no.nav.sf.audit.logging.db.getMetaData
+import no.nav.sf.audit.logging.plugins.appModule
+import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Response
@@ -14,11 +16,17 @@ import org.http4k.routing.static
 import org.http4k.server.Http4kServer
 import org.http4k.server.Netty
 import org.http4k.server.asServer
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import org.koin.core.context.GlobalContext.startKoin
 import java.time.LocalDate
 
-object Application {
+object Application : KoinComponent {
     private val log = KotlinLogging.logger { }
     private val cluster = System.getenv(env_NAIS_CLUSTER_NAME) ?: "local"
+    private val salesforceClient by inject<SalesforceClient>()
+    private val postgresDatabase by inject<PostgresDatabase>()
+
     val context = env(config_CONTEXT)
     val gson = configureGson()
 
@@ -37,6 +45,10 @@ object Application {
     )
 
     fun start() {
+        startKoin {
+            modules(appModule)
+        }
+
         log.info { "Starting in cluster $cluster" }
         apiServer(8080).start()
     }
@@ -53,7 +65,7 @@ object Application {
             log.info("Audit log job is already active, cannot start a new one")
             Response(OK).body("Audit log job is already active, cannot start a new one")
         } else {
-            AuditLogJob.activateFetchAndLog(eventDate, entity, offset)
+            AuditLogJob.activateFetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase)
             Response(OK).body("Start logging for event date $eventDate and entity $entity")
         }
     }
@@ -63,13 +75,11 @@ object Application {
     }
 
     private val clearDbHandler: HttpHandler = {
-        val postgresDatabase = DefaultPostgresDatabase()
         postgresDatabase.createStatusTable(true)
         Response(OK).body("Table recreated")
     }
 
     private val initDbHandler: HttpHandler = {
-        val postgresDatabase = DefaultPostgresDatabase()
         postgresDatabase.createStatusTable(false)
         Response(OK).body("Table created")
     }

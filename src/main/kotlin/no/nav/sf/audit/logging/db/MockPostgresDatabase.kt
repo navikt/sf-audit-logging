@@ -24,4 +24,7 @@ class MockPostgresDatabase : PostgresDatabase {
             AuditLogSyncStatus(eventDate, LocalDate.now(), "Account", 10)
         )
     }
+
+    override fun createStatusTable(dropFirst: Boolean) {
+    }
 }
