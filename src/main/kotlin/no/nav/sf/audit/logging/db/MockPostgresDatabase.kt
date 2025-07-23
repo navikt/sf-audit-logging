@@ -24,4 +24,8 @@ class MockPostgresDatabase : PostgresDatabase {
             AuditLogSyncStatus(eventDate, LocalDate.now(), "Account", 10)
         )
     }
+
+    override fun closeConnection() {
+        // No operation for mock database
+    }
 }

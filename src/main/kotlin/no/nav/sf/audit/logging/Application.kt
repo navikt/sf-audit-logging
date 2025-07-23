@@ -65,12 +65,14 @@ object Application {
     private val clearDbHandler: HttpHandler = {
         val postgresDatabase = DefaultPostgresDatabase()
         postgresDatabase.createStatusTable(true)
+        postgresDatabase.closeConnection()
         Response(OK).body("Table recreated")
     }
 
     private val initDbHandler: HttpHandler = {
         val postgresDatabase = DefaultPostgresDatabase()
         postgresDatabase.createStatusTable(false)
+        postgresDatabase.closeConnection()
         Response(OK).body("Table created")
     }
 }

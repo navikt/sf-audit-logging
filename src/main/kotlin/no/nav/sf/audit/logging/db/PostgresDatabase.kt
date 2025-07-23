@@ -8,4 +8,6 @@ interface PostgresDatabase {
     fun insertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, entity: String, numberOfRecords: Int): Boolean
 
     fun fetchAuditLogSyncStatus(eventDate: LocalDate): List<AuditLogSyncStatus>
+
+    fun closeConnection()
 }

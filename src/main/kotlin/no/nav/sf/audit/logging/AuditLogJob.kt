@@ -35,6 +35,7 @@ object AuditLogJob {
             active = false
             throw IllegalStateException("Audit logs have already been logged for $eventDate")
         }
+        postgresDatabase.closeConnection()
 
         log.info { "Fetch and log audit logs for $eventDate" }
         try {
@@ -78,6 +79,7 @@ object AuditLogJob {
         } catch (e: Exception) {
             log.error { "Error while fetching and logging audit logs " + e.message }
         } finally {
+            postgresDatabase.closeConnection()
             active = false
         }
         return totalNumberOfLoggedRecords.toInt()
