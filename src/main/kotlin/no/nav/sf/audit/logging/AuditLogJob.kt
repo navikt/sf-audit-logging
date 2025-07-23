@@ -4,6 +4,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import no.nav.sf.audit.logging.db.PostgresDatabase
+import no.nav.sf.audit.logging.plugins.Metrics
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import no.nav.sf.audit.logging.salesforce.UriEvent

@@ -3,7 +3,9 @@ package no.nav.sf.audit.logging
 import mu.KotlinLogging
 import no.nav.sf.audit.logging.db.PostgresDatabase
 import no.nav.sf.audit.logging.db.getMetaData
+import no.nav.sf.audit.logging.plugins.Metrics
 import no.nav.sf.audit.logging.plugins.appModule
+import no.nav.sf.audit.logging.plugins.configureGson
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
