@@ -78,11 +78,13 @@ object Application : KoinComponent {
 
     private val clearDbHandler: HttpHandler = {
         postgresDatabase.createStatusTable(true)
+        postgresDatabase.closeConnection()
         Response(OK).body("Table recreated")
     }
 
     private val initDbHandler: HttpHandler = {
         postgresDatabase.createStatusTable(false)
+        postgresDatabase.closeConnection()
         Response(OK).body("Table created")
     }
 }
