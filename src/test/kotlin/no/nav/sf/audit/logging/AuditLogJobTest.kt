@@ -26,6 +26,7 @@ class AuditLogJobTest {
         mockkObject(Metrics)
         every { postgresDatabase.insertAuditLogSyncStatus(any(), any(), any(), any()) } returns true
         every { postgresDatabase.fetchAuditLogSyncStatus(any()) }.returns(emptyList())
+        every { postgresDatabase.closeConnection() } returns Unit
     }
 
     @Test
