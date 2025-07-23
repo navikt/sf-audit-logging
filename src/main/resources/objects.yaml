@@ -11,4 +11,4 @@ ServiceAppointment: Account.INT_PersonIdent__c
 Thread__c: CRM_Account__r.INT_PersonIdent__c
 Conversation_Note__c: CRM_Account__r.INT_PersonIdent__c
 LiveChatTranscript: Account.INT_PersonIdent__c
-Work_Trail__c:IPS_Personnummer__c
+Work_Trail__c: IPS_Personnummer__c
