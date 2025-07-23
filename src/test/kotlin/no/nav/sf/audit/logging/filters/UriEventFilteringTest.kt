@@ -1,31 +1,17 @@
-package no.nav.sf.audit.logging
+package no.nav.sf.audit.logging.filters
 
 import no.nav.sf.audit.logging.salesforce.UriEvent
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class UriEventFilterHelperTest {
+class UriEventFilteringTest {
+    private val classUnderTest = UriEventFiltering()
+    private val entities = mutableMapOf<String, String>()
 
-    @Test
-    fun `Should refer to the person ident field on Accounts`() {
-        val classUnderTest = UriEventFilterHelper("All")
-        val result = classUnderTest.objectsToBeLogged.getProperty("Account")
-        assertEquals("INT_PersonIdent__c", result)
-    }
-
-    @Test
-    fun `Should be more than one objects to be logged when entity is set to All`() {
-        val classUnderTest = UriEventFilterHelper("All")
-        val objectsToBeLogged = classUnderTest.objectsToBeLogged
-        assertTrue(objectsToBeLogged.size > 1)
-    }
-
-    @Test
-    fun `Should be one object to be logged when entity is set to Case`() {
-        val classUnderTest = UriEventFilterHelper("Case")
-        val objectsToBeLogged = classUnderTest.objectsToBeLogged
-        assertEquals(1, objectsToBeLogged.size)
+    init {
+        entities["Account"] = "INT_PersonIdent__c"
+        entities["NavTask__c"] = "INT_PersonIdent__c"
+        entities["Case"] = "INT_CaseIdent__c"
     }
 
     @Test
@@ -48,9 +34,7 @@ class UriEventFilterHelperTest {
                 userType = "Standard"
             )
         )
-
-        val classUnderTest = UriEventFilterHelper("All")
-        val filteredEvents = classUnderTest.filterUriEventsToHaveObjectsToBeLogged(uriEvents)
+        val filteredEvents = classUnderTest.filterUriEventsWithEntitiesToBeLogged(entities, uriEvents)
         assertEquals(1, filteredEvents.size)
     }
 
@@ -75,8 +59,7 @@ class UriEventFilterHelperTest {
             )
         )
 
-        val classUnderTest = UriEventFilterHelper("All")
-        val filteredEvents = classUnderTest.filterUriEventsToHaveObjectsToBeLogged(uriEvents)
+        val filteredEvents = classUnderTest.filterUriEventsWithEntitiesToBeLogged(entities, uriEvents)
         assertEquals(1, filteredEvents.size)
     }
 }

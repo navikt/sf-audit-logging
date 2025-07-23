@@ -4,6 +4,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import no.nav.sf.audit.logging.db.PostgresDatabase
+import no.nav.sf.audit.logging.filters.EntitiesFiltering
+import no.nav.sf.audit.logging.filters.UriEventFiltering
 import no.nav.sf.audit.logging.plugins.Metrics
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
@@ -25,7 +27,6 @@ object AuditLogJob {
     }
 
     fun fetchAndLog(eventDate: LocalDate, entity: String = "All", offset: Int = 0, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase): Int {
-        val uriEventFilterHelper = UriEventFilterHelper(entity)
         var totalNumberOfLoggedRecords = 0
         var totalNumberOfApiCalls = 0
 
@@ -39,13 +40,20 @@ object AuditLogJob {
         try {
 
             Metrics.clearUriEventsCounter()
-            val filteredUriEvents =
-                uriEventFilterHelper.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents(eventDate))
+            val entitiesFiltering = EntitiesFiltering()
+            val entitiesInObjectsYaml = entitiesFiltering.fetchEntitiesInObjectsYaml()
+            val entitiesToBeLogged = entitiesFiltering.fetchEntitiesToBeLogged(entity, entitiesInObjectsYaml)
+            val uriEventsInSalesforce = salesforceClient.fetchUriEvents(eventDate)
+            val filteredUriEvents = UriEventFiltering().filterUriEventsWithEntitiesToBeLogged(
+                entitiesToBeLogged,
+                uriEventsInSalesforce,
+
+            )
             log.info { "Filtered ${filteredUriEvents.size} URI events" }
             filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
                 val personIdentsResponse = salesforceClient.fetchPersonIdents(
                     objectName = entity,
-                    personIdentSelectClause = uriEventFilterHelper.objectsToBeLogged.getProperty(entity),
+                    personIdentSelectClause = entitiesToBeLogged[entity] ?: "",
                     recordIds = events.map { it.recordId }
                 )
                 totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls
