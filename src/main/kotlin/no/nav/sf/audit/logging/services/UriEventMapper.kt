@@ -1,7 +1,8 @@
-package no.nav.sf.audit.logging.salesforce
+package no.nav.sf.audit.logging.services
 
 import com.google.gson.JsonArray
 import mu.KotlinLogging
+import no.nav.sf.audit.logging.model.UriEvent
 
 class UriEventMapper {
     private val log = KotlinLogging.logger { }

@@ -7,9 +7,9 @@ import io.mockk.verify
 import io.prometheus.client.Counter
 import no.nav.sf.audit.logging.db.PostgresDatabase
 import no.nav.sf.audit.logging.plugins.Metrics
-import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
+import no.nav.sf.audit.logging.model.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
-import no.nav.sf.audit.logging.salesforce.UriEvent
+import no.nav.sf.audit.logging.model.UriEvent
 import no.nav.sf.audit.logging.services.AuditLogSyncJobMonitor
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach

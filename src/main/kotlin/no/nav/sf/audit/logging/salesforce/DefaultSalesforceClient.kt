@@ -5,6 +5,10 @@ import mu.KotlinLogging
 import no.nav.sf.audit.logging.Application
 import no.nav.sf.audit.logging.config_SALESFORCE_API_VERSION
 import no.nav.sf.audit.logging.env
+import no.nav.sf.audit.logging.model.PersonIdentsRequest
+import no.nav.sf.audit.logging.model.PersonIdentsResponse
+import no.nav.sf.audit.logging.model.UriEvent
+import no.nav.sf.audit.logging.services.UriEventMapper
 import no.nav.sf.audit.logging.token.AccessTokenHandler
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
@@ -70,7 +74,13 @@ class DefaultSalesforceClient(
             val request = org.http4k.core.Request(Method.POST, accessTokenHandler.instanceUrl + endpointUrl)
                 .header("Authorization", "Bearer ${accessTokenHandler.accessToken}")
                 .header("Accept", "application/json")
-                .body(Application.gson.toJson(PersonIdentsRequest(objectName, personIdentSelectClause, currentRecordIdRange)))
+                .body(Application.gson.toJson(
+                    PersonIdentsRequest(
+                        objectName,
+                        personIdentSelectClause,
+                        currentRecordIdRange
+                    )
+                ))
             val response = client(request)
             if (response.status.successful) {
                 val recordEntries = JsonParser.parseString(response.bodyString()).asJsonArray

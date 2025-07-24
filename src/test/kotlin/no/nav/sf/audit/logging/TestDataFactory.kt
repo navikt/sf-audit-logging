@@ -1,6 +1,6 @@
 package no.nav.sf.audit.logging
 
-import no.nav.sf.audit.logging.salesforce.UriEvent
+import no.nav.sf.audit.logging.model.UriEvent
 
 object TestDataFactory {
 
