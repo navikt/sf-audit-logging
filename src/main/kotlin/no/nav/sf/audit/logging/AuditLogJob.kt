@@ -5,11 +5,9 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import no.nav.sf.audit.logging.db.PostgresDatabase
 import no.nav.sf.audit.logging.plugins.Metrics
-import no.nav.sf.audit.logging.model.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
-import no.nav.sf.audit.logging.model.UriEvent
-import no.nav.sf.audit.logging.services.AuditLogPublisher
 import no.nav.sf.audit.logging.services.AuditLogSyncJobMonitor
+import no.nav.sf.audit.logging.services.DefaultAuditLogPublisher
 import no.nav.sf.audit.logging.services.EntitySelectionService
 import no.nav.sf.audit.logging.services.UriEventEntityFilterService
 import java.time.LocalDate
@@ -46,7 +44,7 @@ object AuditLogJob {
             )
             log.info { "Filtered ${filteredUriEvents.size} URI events" }
             filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
-                //Get person idents for each recordId
+                // Get person idents for each recordId
                 val personIdentsResponse = salesforceClient.fetchPersonIdents(
                     objectName = entity,
                     personIdentSelectClause = entitiesToBeLogged[entity] ?: "",
@@ -54,8 +52,8 @@ object AuditLogJob {
                 )
                 totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls
 
-                //Publish Audit logs
-                val uriEventsSummary= AuditLogPublisher().publishLogs(events,personIdentsResponse,offset)
+                // Publish Audit logs
+                val uriEventsSummary = DefaultAuditLogPublisher().publishLogs(events, personIdentsResponse, offset)
 
                 totalNumberOfLoggedRecords += uriEventsSummary.uriEventsWithPersonIdentInt
 
@@ -85,6 +83,4 @@ object AuditLogJob {
         }
         return totalNumberOfLoggedRecords
     }
-
-
 }

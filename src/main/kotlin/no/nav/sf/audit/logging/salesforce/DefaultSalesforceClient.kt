@@ -74,13 +74,15 @@ class DefaultSalesforceClient(
             val request = org.http4k.core.Request(Method.POST, accessTokenHandler.instanceUrl + endpointUrl)
                 .header("Authorization", "Bearer ${accessTokenHandler.accessToken}")
                 .header("Accept", "application/json")
-                .body(Application.gson.toJson(
-                    PersonIdentsRequest(
-                        objectName,
-                        personIdentSelectClause,
-                        currentRecordIdRange
+                .body(
+                    Application.gson.toJson(
+                        PersonIdentsRequest(
+                            objectName,
+                            personIdentSelectClause,
+                            currentRecordIdRange
+                        )
                     )
-                ))
+                )
             val response = client(request)
             if (response.status.successful) {
                 val recordEntries = JsonParser.parseString(response.bodyString()).asJsonArray

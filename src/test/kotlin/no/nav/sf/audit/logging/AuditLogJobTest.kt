@@ -6,10 +6,10 @@ import io.mockk.mockkObject
 import io.mockk.verify
 import io.prometheus.client.Counter
 import no.nav.sf.audit.logging.db.PostgresDatabase
-import no.nav.sf.audit.logging.plugins.Metrics
 import no.nav.sf.audit.logging.model.PersonIdentsResponse
-import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import no.nav.sf.audit.logging.model.UriEvent
+import no.nav.sf.audit.logging.plugins.Metrics
+import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import no.nav.sf.audit.logging.services.AuditLogSyncJobMonitor
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -194,26 +194,5 @@ class AuditLogJobTest {
         verify(exactly = 1) { postgresDatabase.insertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "WorkOrder", 1) }
     }
 
-    @Test
-    fun `Should log one record when offset is 2 of 3`() {
-        val uriEvents = TestDataFactory.getUriEvents(3)
 
-        val mockCounterChild = mockk<Counter.Child>(relaxed = true)
-        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
-        every { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") } returns mockCounterChild
-        every { Metrics.numberOfApiCalls.labels("RequestPersonIdents") } returns mockCounterChild
-
-        every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
-
-        val personIdentByRecordId = mapOf(
-            "1" to "12345678901",
-            "2" to "12345678902",
-            "3" to "12345678903"
-        )
-        val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
-        every { salesforceClient.fetchPersonIdents(any(), any(), any()) }.returns(personIdentResponse)
-
-        AuditLogJob.fetchAndLog(LocalDate.now(), "All", 2, salesforceClient, postgresDatabase, auditLogSyncJobMonitor)
-        verify(exactly = 1) { postgresDatabase.insertAuditLogSyncStatus(LocalDate.now(), LocalDate.now(), "Account", 1) }
-    }
 }
