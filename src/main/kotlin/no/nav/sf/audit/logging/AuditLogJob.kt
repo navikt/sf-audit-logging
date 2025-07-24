@@ -4,13 +4,13 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import no.nav.sf.audit.logging.db.PostgresDatabase
-import no.nav.sf.audit.logging.filters.EntitiesFiltering
-import no.nav.sf.audit.logging.filters.UriEventFiltering
 import no.nav.sf.audit.logging.plugins.Metrics
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import no.nav.sf.audit.logging.salesforce.UriEvent
 import no.nav.sf.audit.logging.services.AuditLogSyncJobMonitor
+import no.nav.sf.audit.logging.services.EntitySelectionService
+import no.nav.sf.audit.logging.services.UriEventEntityFilterService
 import java.time.LocalDate
 
 object AuditLogJob {
@@ -18,8 +18,8 @@ object AuditLogJob {
     var active = false
     private val log = KotlinLogging.logger { }
     private val naudit = KotlinLogging.logger("AuditLogger")
-    private val entitiesFiltering = EntitiesFiltering()
-    private val uriEventFiltering = UriEventFiltering()
+    private val entitySelectionService = EntitySelectionService()
+    private val uriEventEntityFilterService = UriEventEntityFilterService()
 
     fun activateFetchAndLog(eventDate: LocalDate, entity: String, offset: Int, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase, auditLogSyncJobMonitor: AuditLogSyncJobMonitor) {
         if (active) throw IllegalStateException("Cannot activate new job since one is already active")
@@ -36,10 +36,10 @@ object AuditLogJob {
             auditLogSyncJobMonitor.verifyJobIsNotAlreadyRan(eventDate, entity)
             Metrics.clearUriEventsCounter()
 
-            val entitiesInObjectsYaml = entitiesFiltering.fetchEntitiesInObjectsYaml()
-            val entitiesToBeLogged = entitiesFiltering.fetchEntitiesToBeLogged(entity, entitiesInObjectsYaml)
+            val entitiesInObjectsYaml = entitySelectionService.fetchEntitiesInObjectsYaml()
+            val entitiesToBeLogged = entitySelectionService.fetchEntitiesToBeLogged(entity, entitiesInObjectsYaml)
             val uriEventsInSalesforce = salesforceClient.fetchUriEvents(eventDate)
-            val filteredUriEvents = uriEventFiltering.filterUriEventsWithEntitiesToBeLogged(
+            val filteredUriEvents = uriEventEntityFilterService.filterUriEventsWithEntitiesToBeLogged(
                 entitiesToBeLogged,
                 uriEventsInSalesforce,
 

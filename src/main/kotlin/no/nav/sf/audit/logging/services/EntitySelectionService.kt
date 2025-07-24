@@ -1,12 +1,11 @@
-package no.nav.sf.audit.logging.filters
+package no.nav.sf.audit.logging.services
 
 import java.util.Properties
-import kotlin.toString
 
-class EntitiesFiltering {
+class EntitySelectionService {
     fun fetchEntitiesInObjectsYaml(): Map<String, String> {
         return try {
-            EntitiesFiltering::class.java.getResourceAsStream("/objects.yaml")?.use { inputStream ->
+            EntitySelectionService::class.java.getResourceAsStream("/objects.yaml")?.use { inputStream ->
                 Properties().apply { load(inputStream) }
                     .entries.associate { it.key.toString() to it.value.toString() }
             } ?: throw IllegalStateException("Cannot find objects.yaml in resources")

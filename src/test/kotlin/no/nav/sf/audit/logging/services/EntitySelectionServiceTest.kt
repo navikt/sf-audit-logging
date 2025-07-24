@@ -1,11 +1,11 @@
-package no.nav.sf.audit.logging.filters
+package no.nav.sf.audit.logging.services
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class EntitiesFilteringTest {
-    private val classUnderTest = EntitiesFiltering()
+class EntitySelectionServiceTest {
+    private val classUnderTest = EntitySelectionService()
     private val entities = mutableMapOf<String, String>()
 
     init {

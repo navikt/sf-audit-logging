@@ -1,11 +1,11 @@
-package no.nav.sf.audit.logging.filters
+package no.nav.sf.audit.logging.services
 
 import no.nav.sf.audit.logging.salesforce.UriEvent
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class UriEventFilteringTest {
-    private val classUnderTest = UriEventFiltering()
+class UriEventEntityFilterServiceTest {
+    private val classUnderTest = UriEventEntityFilterService()
     private val entities = mutableMapOf<String, String>()
 
     init {
