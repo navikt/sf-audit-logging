@@ -6,6 +6,7 @@ import mu.KotlinLogging
 import no.nav.sf.audit.logging.db.PostgresDatabase
 import no.nav.sf.audit.logging.filters.EntitiesFiltering
 import no.nav.sf.audit.logging.filters.UriEventFiltering
+import no.nav.sf.audit.logging.monitors.AuditLogSyncMonitor
 import no.nav.sf.audit.logging.plugins.Metrics
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
@@ -17,34 +18,28 @@ object AuditLogJob {
     var active = false
     private val log = KotlinLogging.logger { }
     private val naudit = KotlinLogging.logger("AuditLogger")
+    private val entitiesFiltering = EntitiesFiltering()
+    private val uriEventFiltering = UriEventFiltering()
 
-    fun activateFetchAndLog(eventDate: LocalDate, entity: String, offset: Int, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase) {
+    fun activateFetchAndLog(eventDate: LocalDate, entity: String, offset: Int, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase, auditLogSyncMonitor: AuditLogSyncMonitor) {
         if (active) throw IllegalStateException("Cannot activate new job since one is already active")
         active = true
         GlobalScope.launch {
-            fetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase)
+            fetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase, auditLogSyncMonitor)
         }
     }
 
-    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", offset: Int = 0, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase): Int {
+    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", offset: Int = 0, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase, auditLogSyncMonitor: AuditLogSyncMonitor): Int {
         var totalNumberOfLoggedRecords = 0
         var totalNumberOfApiCalls = 0
-
-        if (entity == "All" && postgresDatabase.fetchAuditLogSyncStatus(eventDate).isNotEmpty()) {
-            active = false
-            throw IllegalStateException("Audit logs have already been logged for $eventDate")
-        }
-        postgresDatabase.closeConnection()
-
-        log.info { "Fetch and log audit logs for $eventDate" }
         try {
-
+            auditLogSyncMonitor.verifyJobIsNotAlreadyRan(eventDate, entity)
             Metrics.clearUriEventsCounter()
-            val entitiesFiltering = EntitiesFiltering()
+
             val entitiesInObjectsYaml = entitiesFiltering.fetchEntitiesInObjectsYaml()
             val entitiesToBeLogged = entitiesFiltering.fetchEntitiesToBeLogged(entity, entitiesInObjectsYaml)
             val uriEventsInSalesforce = salesforceClient.fetchUriEvents(eventDate)
-            val filteredUriEvents = UriEventFiltering().filterUriEventsWithEntitiesToBeLogged(
+            val filteredUriEvents = uriEventFiltering.filterUriEventsWithEntitiesToBeLogged(
                 entitiesToBeLogged,
                 uriEventsInSalesforce,
 
