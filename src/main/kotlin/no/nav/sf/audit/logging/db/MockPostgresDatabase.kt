@@ -25,7 +25,7 @@ class MockPostgresDatabase : PostgresDatabase {
         )
     }
 
-    override fun closeConnection() {
-        // No operation for mock database
-    }
+    override fun createStatusTable(dropFirst: Boolean) {}
+
+    override fun closeConnection() {}
 }

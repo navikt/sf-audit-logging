@@ -83,7 +83,7 @@ class DefaultPostgresDatabase : PostgresDatabase {
         return result
     }
 
-    fun createStatusTable(dropFirst: Boolean = false) {
+    override fun createStatusTable(dropFirst: Boolean) {
         openConnection()
         val database = Database.connect(dataSource!!)
         transaction(database) {

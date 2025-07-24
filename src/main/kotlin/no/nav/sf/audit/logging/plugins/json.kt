@@ -1,4 +1,4 @@
-package no.nav.sf.audit.logging
+package no.nav.sf.audit.logging.plugins
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder

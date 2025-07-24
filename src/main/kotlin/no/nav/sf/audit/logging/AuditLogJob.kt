@@ -3,13 +3,14 @@ package no.nav.sf.audit.logging
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
-import no.nav.sf.audit.logging.db.DefaultPostgresDatabase
-import no.nav.sf.audit.logging.db.MockPostgresDatabase
 import no.nav.sf.audit.logging.db.PostgresDatabase
-import no.nav.sf.audit.logging.salesforce.DefaultSalesforceClient
+import no.nav.sf.audit.logging.plugins.Metrics
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import no.nav.sf.audit.logging.salesforce.UriEvent
+import no.nav.sf.audit.logging.services.AuditLogSyncJobMonitor
+import no.nav.sf.audit.logging.services.EntitySelectionService
+import no.nav.sf.audit.logging.services.UriEventEntityFilterService
 import java.time.LocalDate
 
 object AuditLogJob {
@@ -17,37 +18,37 @@ object AuditLogJob {
     var active = false
     private val log = KotlinLogging.logger { }
     private val naudit = KotlinLogging.logger("AuditLogger")
+    private val entitySelectionService = EntitySelectionService()
+    private val uriEventEntityFilterService = UriEventEntityFilterService()
 
-    fun activateFetchAndLog(eventDate: LocalDate, entity: String, offset: Int, salesforceClient: SalesforceClient = DefaultSalesforceClient(), postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()) {
+    fun activateFetchAndLog(eventDate: LocalDate, entity: String, offset: Int, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase, auditLogSyncJobMonitor: AuditLogSyncJobMonitor) {
         if (active) throw IllegalStateException("Cannot activate new job since one is already active")
         active = true
         GlobalScope.launch {
-            fetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase)
+            fetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase, auditLogSyncJobMonitor)
         }
     }
 
-    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", offset: Int = 0, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase): Int {
-        val uriEventFilterHelper = UriEventFilterHelper(entity)
+    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", offset: Int = 0, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase, auditLogSyncJobMonitor: AuditLogSyncJobMonitor): Int {
         var totalNumberOfLoggedRecords = 0
         var totalNumberOfApiCalls = 0
-
-        if (entity == "All" && postgresDatabase.fetchAuditLogSyncStatus(eventDate).isNotEmpty()) {
-            active = false
-            throw IllegalStateException("Audit logs have already been logged for $eventDate")
-        }
-        postgresDatabase.closeConnection()
-
-        log.info { "Fetch and log audit logs for $eventDate" }
         try {
-
+            auditLogSyncJobMonitor.verifyJobIsNotAlreadyRan(eventDate, entity)
             Metrics.clearUriEventsCounter()
-            val filteredUriEvents =
-                uriEventFilterHelper.filterUriEventsToHaveObjectsToBeLogged(salesforceClient.fetchUriEvents(eventDate))
+
+            val entitiesInObjectsYaml = entitySelectionService.fetchEntitiesInObjectsYaml()
+            val entitiesToBeLogged = entitySelectionService.fetchEntitiesToBeLogged(entity, entitiesInObjectsYaml)
+            val uriEventsInSalesforce = salesforceClient.fetchUriEvents(eventDate)
+            val filteredUriEvents = uriEventEntityFilterService.filterUriEventsWithEntitiesToBeLogged(
+                entitiesToBeLogged,
+                uriEventsInSalesforce,
+
+            )
             log.info { "Filtered ${filteredUriEvents.size} URI events" }
             filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
                 val personIdentsResponse = salesforceClient.fetchPersonIdents(
                     objectName = entity,
-                    personIdentSelectClause = uriEventFilterHelper.objectsToBeLogged.getProperty(entity),
+                    personIdentSelectClause = entitiesToBeLogged[entity] ?: "",
                     recordIds = events.map { it.recordId }
                 )
                 totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls

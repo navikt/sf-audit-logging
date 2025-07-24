@@ -1,4 +1,4 @@
-package no.nav.sf.audit.logging
+package no.nav.sf.audit.logging.plugins
 
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.Counter
@@ -36,13 +36,13 @@ object Metrics {
             TextFormat.write004(str, CollectorRegistry.defaultRegistry.metricFamilySamples())
             val result = str.toString()
             if (result.isEmpty()) {
-                Response(Status.NO_CONTENT)
+                Response.Companion(Status.Companion.NO_CONTENT)
             } else {
-                Response(Status.OK).body(result)
+                Response.Companion(Status.Companion.OK).body(result)
             }
         } catch (e: Exception) {
             log.error { "/prometheus failed writing metrics - ${e.message}" }
-            Response(Status.INTERNAL_SERVER_ERROR)
+            Response.Companion(Status.Companion.INTERNAL_SERVER_ERROR)
         }
     }
 }

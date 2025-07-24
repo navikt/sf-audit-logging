@@ -9,5 +9,6 @@ interface PostgresDatabase {
 
     fun fetchAuditLogSyncStatus(eventDate: LocalDate): List<AuditLogSyncStatus>
 
+    fun createStatusTable(dropFirst: Boolean)
     fun closeConnection()
 }
