@@ -8,16 +8,16 @@ import no.nav.sf.audit.logging.plugins.Metrics
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import no.nav.sf.audit.logging.services.AuditLogPublisher
 import no.nav.sf.audit.logging.services.AuditLogSyncJobMonitor
-import no.nav.sf.audit.logging.services.EntitySelectionService
-import no.nav.sf.audit.logging.services.UriEventEntityFilterService
+import no.nav.sf.audit.logging.services.EntitySelection
+import no.nav.sf.audit.logging.services.UriEventEntityFilter
 import java.time.LocalDate
 
 object AuditLogJob {
 
     var active = false
     private val log = KotlinLogging.logger { }
-    private val entitySelectionService = EntitySelectionService()
-    private val uriEventEntityFilterService = UriEventEntityFilterService()
+    private val entitySelection = EntitySelection()
+    private val uriEventEntityFilter = UriEventEntityFilter()
 
     fun activateFetchAndLog(eventDate: LocalDate, entity: String, offset: Int, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase, auditLogSyncJobMonitor: AuditLogSyncJobMonitor, auditLogPublisher: AuditLogPublisher) {
         if (active) throw IllegalStateException("Cannot activate new job since one is already active")
@@ -34,10 +34,10 @@ object AuditLogJob {
             auditLogSyncJobMonitor.verifyJobIsNotAlreadyRan(eventDate, entity)
             Metrics.clearUriEventsCounter()
 
-            val entitiesInObjectsYaml = entitySelectionService.fetchEntitiesInObjectsYaml()
-            val entitiesToBeLogged = entitySelectionService.fetchEntitiesToBeLogged(entity, entitiesInObjectsYaml)
+            val entitiesInObjectsYaml = entitySelection.fetchEntitiesInObjectsYaml()
+            val entitiesToBeLogged = entitySelection.fetchEntitiesToBeLogged(entity, entitiesInObjectsYaml)
             val uriEventsInSalesforce = salesforceClient.fetchUriEvents(eventDate)
-            val filteredUriEvents = uriEventEntityFilterService.filterUriEventsWithEntitiesToBeLogged(
+            val filteredUriEvents = uriEventEntityFilter.filterUriEventsWithEntitiesToBeLogged(
                 entitiesToBeLogged,
                 uriEventsInSalesforce,
 
