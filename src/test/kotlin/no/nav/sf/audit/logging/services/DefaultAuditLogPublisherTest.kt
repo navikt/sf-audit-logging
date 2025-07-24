@@ -1,19 +1,12 @@
 package no.nav.sf.audit.logging.services
 
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
-import io.prometheus.client.Counter
-import no.nav.sf.audit.logging.AuditLogJob
 import no.nav.sf.audit.logging.TestDataFactory
 import no.nav.sf.audit.logging.model.PersonIdentsResponse
-import no.nav.sf.audit.logging.plugins.Metrics
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import java.time.LocalDate
 
 class DefaultAuditLogPublisherTest {
-    private val classUnderTest= DefaultAuditLogPublisher()
+    private val classUnderTest = DefaultAuditLogPublisher()
 
     @Test
     fun `Should log two uri events of Account`() {
@@ -25,7 +18,7 @@ class DefaultAuditLogPublisherTest {
         )
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
 
-        val result = classUnderTest.publishLogs(uriEvents,personIdentResponse,0)
+        val result = classUnderTest.publishLogs(uriEvents, personIdentResponse, 0)
         assertEquals(2.0, result.uriEventsWithPersonIdent)
         assertEquals(0.0, result.uriEventsWithoutAnyPersonIdents)
     }
@@ -39,7 +32,7 @@ class DefaultAuditLogPublisherTest {
         )
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
 
-        val result = classUnderTest.publishLogs(uriEvents,personIdentResponse,0)
+        val result = classUnderTest.publishLogs(uriEvents, personIdentResponse, 0)
         assertEquals(1.0, result.uriEventsWithPersonIdent)
         assertEquals(1.0, result.uriEventsWithoutAnyPersonIdents)
     }
@@ -54,7 +47,7 @@ class DefaultAuditLogPublisherTest {
         )
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
 
-        val result = classUnderTest.publishLogs(uriEventsWithSameRecordId ,personIdentResponse,0)
+        val result = classUnderTest.publishLogs(uriEventsWithSameRecordId, personIdentResponse, 0)
         assertEquals(2.0, result.uriEventsWithPersonIdent)
         assertEquals(0.0, result.uriEventsWithoutAnyPersonIdents)
     }
@@ -68,7 +61,7 @@ class DefaultAuditLogPublisherTest {
         )
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
 
-        val result = classUnderTest.publishLogs(uriEvents,personIdentResponse,0)
+        val result = classUnderTest.publishLogs(uriEvents, personIdentResponse, 0)
         assertEquals(0.0, result.uriEventsWithPersonIdent)
         assertEquals(1.0, result.uriEventsWithoutAnyPersonIdents)
     }
@@ -77,7 +70,6 @@ class DefaultAuditLogPublisherTest {
     fun `Should log one record when offset is 2 of 3`() {
         val uriEvents = TestDataFactory.getUriEvents(3)
 
-
         val personIdentByRecordId = mapOf(
             "1" to "12345678901",
             "2" to "12345678902",
@@ -85,7 +77,7 @@ class DefaultAuditLogPublisherTest {
         )
         val personIdentResponse = PersonIdentsResponse("Account", 1, personIdentByRecordId)
 
-        val result = classUnderTest.publishLogs(uriEvents,personIdentResponse,2)
+        val result = classUnderTest.publishLogs(uriEvents, personIdentResponse, 2)
         assertEquals(1.0, result.uriEventsWithPersonIdent)
         assertEquals(0.0, result.uriEventsWithoutAnyPersonIdents)
     }

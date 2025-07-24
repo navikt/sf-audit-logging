@@ -6,8 +6,8 @@ import mu.KotlinLogging
 import no.nav.sf.audit.logging.db.PostgresDatabase
 import no.nav.sf.audit.logging.plugins.Metrics
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
+import no.nav.sf.audit.logging.services.AuditLogPublisher
 import no.nav.sf.audit.logging.services.AuditLogSyncJobMonitor
-import no.nav.sf.audit.logging.services.DefaultAuditLogPublisher
 import no.nav.sf.audit.logging.services.EntitySelectionService
 import no.nav.sf.audit.logging.services.UriEventEntityFilterService
 import java.time.LocalDate
@@ -19,15 +19,15 @@ object AuditLogJob {
     private val entitySelectionService = EntitySelectionService()
     private val uriEventEntityFilterService = UriEventEntityFilterService()
 
-    fun activateFetchAndLog(eventDate: LocalDate, entity: String, offset: Int, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase, auditLogSyncJobMonitor: AuditLogSyncJobMonitor) {
+    fun activateFetchAndLog(eventDate: LocalDate, entity: String, offset: Int, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase, auditLogSyncJobMonitor: AuditLogSyncJobMonitor, auditLogPublisher: AuditLogPublisher) {
         if (active) throw IllegalStateException("Cannot activate new job since one is already active")
         active = true
         GlobalScope.launch {
-            fetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase, auditLogSyncJobMonitor)
+            fetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase, auditLogSyncJobMonitor, auditLogPublisher)
         }
     }
 
-    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", offset: Int = 0, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase, auditLogSyncJobMonitor: AuditLogSyncJobMonitor): Int {
+    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", offset: Int = 0, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase, auditLogSyncJobMonitor: AuditLogSyncJobMonitor, auditLogPublisher: AuditLogPublisher): Int {
         var totalNumberOfLoggedRecords = 0
         var totalNumberOfApiCalls = 0
         try {
@@ -53,7 +53,7 @@ object AuditLogJob {
                 totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls
 
                 // Publish Audit logs
-                val uriEventsSummary = DefaultAuditLogPublisher().publishLogs(events, personIdentsResponse, offset)
+                val uriEventsSummary = auditLogPublisher.publishLogs(events, personIdentsResponse, offset)
 
                 totalNumberOfLoggedRecords += uriEventsSummary.uriEventsWithPersonIdentInt
 
