@@ -3,11 +3,11 @@ package no.nav.sf.audit.logging
 import mu.KotlinLogging
 import no.nav.sf.audit.logging.db.PostgresDatabase
 import no.nav.sf.audit.logging.db.getMetaData
-import no.nav.sf.audit.logging.monitors.AuditLogSyncMonitor
 import no.nav.sf.audit.logging.plugins.Metrics
 import no.nav.sf.audit.logging.plugins.appModule
 import no.nav.sf.audit.logging.plugins.configureGson
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
+import no.nav.sf.audit.logging.services.AuditLogSyncJobMonitor
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Response
@@ -29,7 +29,7 @@ object Application : KoinComponent {
     private val cluster = System.getenv(env_NAIS_CLUSTER_NAME) ?: "local"
     private val salesforceClient by inject<SalesforceClient>()
     private val postgresDatabase by inject<PostgresDatabase>()
-    private val auditLogSyncMonitor by inject<AuditLogSyncMonitor>()
+    private val auditLogSyncJobMonitor by inject<AuditLogSyncJobMonitor>()
 
     val context = env(config_CONTEXT)
     val gson = configureGson()
@@ -69,7 +69,7 @@ object Application : KoinComponent {
             log.info("Audit log job is already active, cannot start a new one")
             Response(OK).body("Audit log job is already active, cannot start a new one")
         } else {
-            AuditLogJob.activateFetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase, auditLogSyncMonitor)
+            AuditLogJob.activateFetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase, auditLogSyncJobMonitor)
             Response(OK).body("Start logging for event date $eventDate and entity $entity")
         }
     }

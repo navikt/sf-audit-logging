@@ -6,11 +6,11 @@ import mu.KotlinLogging
 import no.nav.sf.audit.logging.db.PostgresDatabase
 import no.nav.sf.audit.logging.filters.EntitiesFiltering
 import no.nav.sf.audit.logging.filters.UriEventFiltering
-import no.nav.sf.audit.logging.monitors.AuditLogSyncMonitor
 import no.nav.sf.audit.logging.plugins.Metrics
 import no.nav.sf.audit.logging.salesforce.PersonIdentsResponse
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import no.nav.sf.audit.logging.salesforce.UriEvent
+import no.nav.sf.audit.logging.services.AuditLogSyncJobMonitor
 import java.time.LocalDate
 
 object AuditLogJob {
@@ -21,19 +21,19 @@ object AuditLogJob {
     private val entitiesFiltering = EntitiesFiltering()
     private val uriEventFiltering = UriEventFiltering()
 
-    fun activateFetchAndLog(eventDate: LocalDate, entity: String, offset: Int, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase, auditLogSyncMonitor: AuditLogSyncMonitor) {
+    fun activateFetchAndLog(eventDate: LocalDate, entity: String, offset: Int, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase, auditLogSyncJobMonitor: AuditLogSyncJobMonitor) {
         if (active) throw IllegalStateException("Cannot activate new job since one is already active")
         active = true
         GlobalScope.launch {
-            fetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase, auditLogSyncMonitor)
+            fetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase, auditLogSyncJobMonitor)
         }
     }
 
-    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", offset: Int = 0, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase, auditLogSyncMonitor: AuditLogSyncMonitor): Int {
+    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", offset: Int = 0, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase, auditLogSyncJobMonitor: AuditLogSyncJobMonitor): Int {
         var totalNumberOfLoggedRecords = 0
         var totalNumberOfApiCalls = 0
         try {
-            auditLogSyncMonitor.verifyJobIsNotAlreadyRan(eventDate, entity)
+            auditLogSyncJobMonitor.verifyJobIsNotAlreadyRan(eventDate, entity)
             Metrics.clearUriEventsCounter()
 
             val entitiesInObjectsYaml = entitiesFiltering.fetchEntitiesInObjectsYaml()

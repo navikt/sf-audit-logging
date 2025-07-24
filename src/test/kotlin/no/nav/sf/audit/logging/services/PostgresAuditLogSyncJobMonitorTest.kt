@@ -1,4 +1,4 @@
-package no.nav.sf.audit.logging.monitors
+package no.nav.sf.audit.logging.services
 
 import io.mockk.every
 import io.mockk.mockk
@@ -9,9 +9,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 
-class DefaultAuditLogSyncMonitorTest {
+class PostgresAuditLogSyncJobMonitorTest {
     private val postgresDatabase = mockk<PostgresDatabase>()
-    private val classUnderTest = DefaultAuditLogSyncMonitor(postgresDatabase)
+    private val classUnderTest = PostgresAuditLogSyncJobMonitor(postgresDatabase)
 
     @BeforeEach
     fun setup() {
