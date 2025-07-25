@@ -1,6 +1,7 @@
 package no.nav.sf.audit.logging.salesforce
 
 import com.google.gson.JsonParser
+import no.nav.sf.audit.logging.services.UriEventMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 

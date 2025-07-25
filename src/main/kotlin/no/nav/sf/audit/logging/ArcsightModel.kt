@@ -1,6 +1,6 @@
 package no.nav.sf.audit.logging
 
-import no.nav.sf.audit.logging.salesforce.UriEvent
+import no.nav.sf.audit.logging.model.UriEvent
 import java.time.Instant
 
 fun createLogMessage(record: UriEvent): String {

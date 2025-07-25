@@ -2,10 +2,10 @@ package no.nav.sf.audit.logging.services
 
 import java.util.Properties
 
-class EntitySelectionService {
+class EntitySelection {
     fun fetchEntitiesInObjectsYaml(): Map<String, String> {
         return try {
-            EntitySelectionService::class.java.getResourceAsStream("/objects.yaml")?.use { inputStream ->
+            EntitySelection::class.java.getResourceAsStream("/objects.yaml")?.use { inputStream ->
                 Properties().apply { load(inputStream) }
                     .entries.associate { it.key.toString() to it.value.toString() }
             } ?: throw IllegalStateException("Cannot find objects.yaml in resources")

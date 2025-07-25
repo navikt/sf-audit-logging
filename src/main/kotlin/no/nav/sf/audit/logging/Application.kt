@@ -7,6 +7,7 @@ import no.nav.sf.audit.logging.plugins.Metrics
 import no.nav.sf.audit.logging.plugins.appModule
 import no.nav.sf.audit.logging.plugins.configureGson
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
+import no.nav.sf.audit.logging.services.AuditLogPublisher
 import no.nav.sf.audit.logging.services.AuditLogSyncJobMonitor
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
@@ -30,6 +31,7 @@ object Application : KoinComponent {
     private val salesforceClient by inject<SalesforceClient>()
     private val postgresDatabase by inject<PostgresDatabase>()
     private val auditLogSyncJobMonitor by inject<AuditLogSyncJobMonitor>()
+    private val auditLogPublisher by inject<AuditLogPublisher>()
 
     val context = env(config_CONTEXT)
     val gson = configureGson()
@@ -69,7 +71,7 @@ object Application : KoinComponent {
             log.info("Audit log job is already active, cannot start a new one")
             Response(OK).body("Audit log job is already active, cannot start a new one")
         } else {
-            AuditLogJob.activateFetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase, auditLogSyncJobMonitor)
+            AuditLogJob.activateFetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase, auditLogSyncJobMonitor, auditLogPublisher)
             Response(OK).body("Start logging for event date $eventDate and entity $entity")
         }
     }
