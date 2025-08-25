@@ -7,3 +7,5 @@ NAIS-jobb kjører hver natt
 Det er mulig å overføre objekter enkeltvis ved behov:
 /internal/fetchAndLog?entity=Account&eventDate=2025-06-01&offset=0
 
+https://navikt.github.io/platforce-doc/security/audit-logging/
+
