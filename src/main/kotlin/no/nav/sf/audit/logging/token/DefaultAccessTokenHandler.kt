@@ -12,24 +12,22 @@ import no.nav.sf.audit.logging.secret_PRIVATE_KEY_ALIAS
 import no.nav.sf.audit.logging.secret_PRIVATE_KEY_PASSWORD
 import no.nav.sf.audit.logging.secret_SF_CLIENT_ID
 import no.nav.sf.audit.logging.secret_SF_USERNAME
-import org.apache.commons.codec.binary.Base64
 import org.http4k.client.OkHttp
-import org.http4k.client.OkHttp.invoke
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request
-import org.http4k.core.Request.Companion.invoke
 import org.http4k.core.Response
 import org.http4k.core.body.toBody
-import java.io.File
 import java.security.KeyStore
 import java.security.PrivateKey
+import java.security.Signature
+import java.util.Base64
 
 /**
  * A handler for oauth2 access flow to salesforce.
  * @see [sf.remoteaccess_oauth_jwt_flow](https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_jwt_flow.htm&type=5)
  *
- * Fetches and caches access token, also retrieves instance url
+ * Fetches and caches access token. Also retrieves instance url and tenant id
  */
 class DefaultAccessTokenHandler : AccessTokenHandler {
     override val accessToken get() = fetchAccessTokenAndInstanceUrl().first
@@ -92,11 +90,12 @@ class DefaultAccessTokenHandler : AccessTokenHandler {
         for (retry in 1..4) {
             try {
                 val response: Response = client(accessTokenRequest)
-                File("/tmp/latestAccessTokenResponse").writeText(response.toMessage())
                 if (response.status.code == 200) {
                     val accessTokenResponse = gson.fromJson(response.bodyString(), AccessTokenResponse::class.java)
                     lastTokenTriplet = Triple(accessTokenResponse.access_token, accessTokenResponse.instance_url, accessTokenResponse.id.split("/")[4])
                     expireTime = System.currentTimeMillis() + 600000 // (expireMomentSinceEpochInSeconds - 10) * 1000
+                    // println("$accessTokenResponse")
+                    // println("UPDATE triple $lastTokenTriplet")
                     return lastTokenTriplet
                 }
             } catch (e: Exception) {
@@ -116,7 +115,7 @@ class DefaultAccessTokenHandler : AccessTokenHandler {
 
     private fun PrivateKey.sign(data: ByteArray): String {
         return this.let {
-            java.security.Signature.getInstance("SHA256withRSA").apply {
+            Signature.getInstance("SHA256withRSA").apply {
                 initSign(it)
                 update(data)
             }.run {
@@ -125,9 +124,9 @@ class DefaultAccessTokenHandler : AccessTokenHandler {
         }
     }
 
-    private fun ByteArray.encodeB64(): String = Base64.encodeBase64URLSafeString(this)
-    private fun String.decodeB64(): ByteArray = Base64.decodeBase64(this)
-    private fun String.encodeB64UrlSafe(): String = Base64.encodeBase64URLSafeString(this.toByteArray())
+    private fun ByteArray.encodeB64(): String = String(Base64.getUrlEncoder().withoutPadding().encode(this))
+    private fun String.decodeB64(): ByteArray = Base64.getMimeDecoder().decode(this)
+    private fun String.encodeB64UrlSafe(): String = this.toByteArray(Charsets.UTF_8).encodeB64()
 
     private data class JWTClaim(
         val iss: String,
