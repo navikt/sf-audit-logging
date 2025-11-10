@@ -3,19 +3,23 @@ package no.nav.sf.audit.logging.services
 import java.util.Properties
 
 class EntitySelection {
-    fun fetchEntitiesInObjectsYaml(): Map<String, String> {
-        return try {
+    fun fetchEntitiesInObjectsYaml(): Map<String, String> =
+        try {
             EntitySelection::class.java.getResourceAsStream("/objects.yaml")?.use { inputStream ->
-                Properties().apply { load(inputStream) }
-                    .entries.associate { it.key.toString() to it.value.toString() }
+                Properties()
+                    .apply { load(inputStream) }
+                    .entries
+                    .associate { it.key.toString() to it.value.toString() }
             } ?: throw IllegalStateException("Cannot find objects.yaml in resources")
         } catch (e: Exception) {
             throw IllegalStateException("Failed to load objects.yaml", e)
         }
-    }
 
-    fun fetchEntitiesToBeLogged(chosenEntity: String, entites: Map<String, String>): Map<String, String> {
-        return if (chosenEntity == "All") {
+    fun fetchEntitiesToBeLogged(
+        chosenEntity: String,
+        entites: Map<String, String>,
+    ): Map<String, String> =
+        if (chosenEntity == "All") {
             // "All" should not include Case. Cases are running in a separate job
             entites.filterKeys { it != "Case" }
         } else {
@@ -25,5 +29,4 @@ class EntitySelection {
             }
             filteredEntities
         }
-    }
 }

@@ -9,7 +9,12 @@ import kotlin.collections.forEach
 
 class DefaultAuditLogPublisher : AuditLogPublisher {
     private val naudit = KotlinLogging.logger("AuditLogger")
-    override fun publishLogs(uriEvents: List<UriEvent>, personIdentsResponse: PersonIdentsResponse, offset: Int): UriEventsSummary {
+
+    override fun publishLogs(
+        uriEvents: List<UriEvent>,
+        personIdentsResponse: PersonIdentsResponse,
+        offset: Int,
+    ): UriEventsSummary {
         var uriEventsWithPersonIdent = 0.0
         var uriEventsWithoutAnyPersonIdents = 0.0
         var batchCounter = 0

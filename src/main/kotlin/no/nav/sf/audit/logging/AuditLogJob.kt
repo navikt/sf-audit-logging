@@ -13,13 +13,20 @@ import no.nav.sf.audit.logging.services.UriEventEntityFilter
 import java.time.LocalDate
 
 object AuditLogJob {
-
     var active = false
     private val log = KotlinLogging.logger { }
     private val entitySelection = EntitySelection()
     private val uriEventEntityFilter = UriEventEntityFilter()
 
-    fun activateFetchAndLog(eventDate: LocalDate, entity: String, offset: Int, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase, auditLogSyncJobMonitor: AuditLogSyncJobMonitor, auditLogPublisher: AuditLogPublisher) {
+    fun activateFetchAndLog(
+        eventDate: LocalDate,
+        entity: String,
+        offset: Int,
+        salesforceClient: SalesforceClient,
+        postgresDatabase: PostgresDatabase,
+        auditLogSyncJobMonitor: AuditLogSyncJobMonitor,
+        auditLogPublisher: AuditLogPublisher,
+    ) {
         if (active) throw IllegalStateException("Cannot activate new job since one is already active")
         active = true
         GlobalScope.launch {
@@ -27,7 +34,15 @@ object AuditLogJob {
         }
     }
 
-    fun fetchAndLog(eventDate: LocalDate, entity: String = "All", offset: Int = 0, salesforceClient: SalesforceClient, postgresDatabase: PostgresDatabase, auditLogSyncJobMonitor: AuditLogSyncJobMonitor, auditLogPublisher: AuditLogPublisher): Int {
+    fun fetchAndLog(
+        eventDate: LocalDate,
+        entity: String = "All",
+        offset: Int = 0,
+        salesforceClient: SalesforceClient,
+        postgresDatabase: PostgresDatabase,
+        auditLogSyncJobMonitor: AuditLogSyncJobMonitor,
+        auditLogPublisher: AuditLogPublisher,
+    ): Int {
         var totalNumberOfLoggedRecords = 0
         var totalNumberOfApiCalls = 0
         try {
@@ -37,19 +52,20 @@ object AuditLogJob {
             val entitiesInObjectsYaml = entitySelection.fetchEntitiesInObjectsYaml()
             val entitiesToBeLogged = entitySelection.fetchEntitiesToBeLogged(entity, entitiesInObjectsYaml)
             val uriEventsInSalesforce = salesforceClient.fetchUriEvents(eventDate)
-            val filteredUriEvents = uriEventEntityFilter.filterUriEventsWithEntitiesToBeLogged(
-                entitiesToBeLogged,
-                uriEventsInSalesforce,
-
-            )
+            val filteredUriEvents =
+                uriEventEntityFilter.filterUriEventsWithEntitiesToBeLogged(
+                    entitiesToBeLogged,
+                    uriEventsInSalesforce,
+                )
             log.info { "Filtered ${filteredUriEvents.size} URI events" }
             filteredUriEvents.groupBy { it.entity }.forEach { (entity, events) ->
                 // Get person idents for each recordId
-                val personIdentsResponse = salesforceClient.fetchPersonIdents(
-                    objectName = entity,
-                    personIdentSelectClause = entitiesToBeLogged[entity] ?: "",
-                    recordIds = events.map { it.recordId }
-                )
+                val personIdentsResponse =
+                    salesforceClient.fetchPersonIdents(
+                        objectName = entity,
+                        personIdentSelectClause = entitiesToBeLogged[entity] ?: "",
+                        recordIds = events.map { it.recordId },
+                    )
                 totalNumberOfApiCalls += personIdentsResponse.numberOfApiCalls
 
                 // Publish Audit logs
@@ -59,12 +75,12 @@ object AuditLogJob {
 
                 if (uriEventsSummary.uriEventsWithPersonIdent > 0) {
                     Metrics.uriEventsWithPersonIdent.labels(entity).inc(uriEventsSummary.uriEventsWithPersonIdent)
-                    log.info() { "Logging ${uriEventsSummary.uriEventsWithPersonIdentInt} metrics entity $entity" }
+                    log.info { "Logging ${uriEventsSummary.uriEventsWithPersonIdentInt} metrics entity $entity" }
                     postgresDatabase.insertAuditLogSyncStatus(
                         eventDate,
                         LocalDate.now(),
                         entity,
-                        uriEventsSummary.uriEventsWithPersonIdentInt
+                        uriEventsSummary.uriEventsWithPersonIdentInt,
                     )
                 }
                 if (uriEventsSummary.uriEventsWithoutAnyPersonIdents > 0) {

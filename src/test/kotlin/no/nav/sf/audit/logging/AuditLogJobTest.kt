@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class AuditLogJobTest {
-
     private val salesforceClient: SalesforceClient = mockk<SalesforceClient>()
     private val postgresDatabase = mockk<PostgresDatabase>()
     private val auditLogSyncJobMonitor = mockk<AuditLogSyncJobMonitor>()
@@ -35,7 +34,7 @@ class AuditLogJobTest {
         every { postgresDatabase.closeConnection() } returns Unit
         every { auditLogSyncJobMonitor.verifyJobIsNotAlreadyRan(any(), any()) } returns Unit
         every { salesforceClient.fetchUriEvents(any()) }.returns(uriEvents)
-        every { salesforceClient.fetchPersonIdents(any(), any(), any()) } returns(personIdentsResponse)
+        every { salesforceClient.fetchPersonIdents(any(), any(), any()) } returns (personIdentsResponse)
         every { Metrics.uriEventsWithPersonIdent.labels("Account") } returns mockCounterChild
     }
 
@@ -44,7 +43,16 @@ class AuditLogJobTest {
         val uriEventsSummary = UriEventsSummary(2.0, 0.0)
         every { auditLogPublisher.publishLogs(any(), any(), any()) } returns uriEventsSummary
 
-        val result = AuditLogJob.fetchAndLog(LocalDate.now(), "All", 0, salesforceClient, postgresDatabase, auditLogSyncJobMonitor, auditLogPublisher)
+        val result =
+            AuditLogJob.fetchAndLog(
+                LocalDate.now(),
+                "All",
+                0,
+                salesforceClient,
+                postgresDatabase,
+                auditLogSyncJobMonitor,
+                auditLogPublisher,
+            )
         assertEquals(2, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithPersonIdent.labels("Account") }
@@ -58,7 +66,16 @@ class AuditLogJobTest {
         val uriEventsSummary = UriEventsSummary(0.0, 1.0)
         every { auditLogPublisher.publishLogs(any(), any(), any()) } returns uriEventsSummary
 
-        val result = AuditLogJob.fetchAndLog(LocalDate.now(), "All", 0, salesforceClient, postgresDatabase, auditLogSyncJobMonitor, auditLogPublisher)
+        val result =
+            AuditLogJob.fetchAndLog(
+                LocalDate.now(),
+                "All",
+                0,
+                salesforceClient,
+                postgresDatabase,
+                auditLogSyncJobMonitor,
+                auditLogPublisher,
+            )
         assertEquals(0, result)
 
         verify(exactly = 1) { Metrics.uriEventsWithoutAnyPersonIdents.labels("Account") }

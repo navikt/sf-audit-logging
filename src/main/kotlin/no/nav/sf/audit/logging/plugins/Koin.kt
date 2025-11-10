@@ -14,9 +14,10 @@ import no.nav.sf.audit.logging.token.DefaultAccessTokenHandler
 import org.http4k.client.OkHttp
 import org.koin.dsl.module
 
-val appModule = module {
-    single<SalesforceClient> { DefaultSalesforceClient(DefaultAccessTokenHandler(), OkHttp()) }
-    single<PostgresDatabase> { if (local) MockPostgresDatabase() else DefaultPostgresDatabase() }
-    single<AuditLogSyncJobMonitor> { PostgresAuditLogSyncJobMonitor(DefaultPostgresDatabase()) }
-    single<AuditLogPublisher> { DefaultAuditLogPublisher() }
-}
+val appModule =
+    module {
+        single<SalesforceClient> { DefaultSalesforceClient(DefaultAccessTokenHandler(), OkHttp()) }
+        single<PostgresDatabase> { if (local) MockPostgresDatabase() else DefaultPostgresDatabase() }
+        single<AuditLogSyncJobMonitor> { PostgresAuditLogSyncJobMonitor(DefaultPostgresDatabase()) }
+        single<AuditLogPublisher> { DefaultAuditLogPublisher() }
+    }

@@ -9,10 +9,11 @@ import java.time.LocalDate
 
 class ModelTest {
     private val postgresDatabase = mockk<PostgresDatabase>()
-    private val auditLogSyncStatusesList = listOf(
-        AuditLogSyncStatus(LocalDate.now().minusDays(1), LocalDate.now(), "Account", 45),
-        AuditLogSyncStatus(LocalDate.now().minusDays(1), LocalDate.now().minusDays(1), "Account", 5)
-    )
+    private val auditLogSyncStatusesList =
+        listOf(
+            AuditLogSyncStatus(LocalDate.now().minusDays(1), LocalDate.now(), "Account", 45),
+            AuditLogSyncStatus(LocalDate.now().minusDays(1), LocalDate.now().minusDays(1), "Account", 5),
+        )
 
     @BeforeEach
     fun setup() {

@@ -21,13 +21,11 @@ fun createLogMessage(record: UriEvent): String {
         signatureID,
         name,
         severity,
-        extension
+        extension,
     ).joinToString(separator = "|")
 }
 
-private fun getUNIXTimestamp(date: String?): String {
-    return date?.let { Instant.parse(it.substring(0, 22) + "Z").toEpochMilli().toString() } ?: ""
-}
+private fun getUNIXTimestamp(date: String?): String = date?.let { Instant.parse(it.substring(0, 22) + "Z").toEpochMilli().toString() } ?: ""
 
 private fun createExtension(uriEvent: UriEvent): String {
     val end = "end=" + getUNIXTimestamp(uriEvent.eventDate)
@@ -43,6 +41,6 @@ private fun createExtension(uriEvent: UriEvent): String {
         flexString1,
         flexString1Label,
         act,
-        duid
+        duid,
     ).joinToString(separator = " ")
 }

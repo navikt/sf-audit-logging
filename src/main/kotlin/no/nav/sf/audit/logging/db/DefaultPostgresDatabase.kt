@@ -22,31 +22,39 @@ class DefaultPostgresDatabase : PostgresDatabase {
     private val dbJdbcUrl = env("${no.nav.sf.audit.logging.db.NAIS_DB_PREFIX}${Application.context}_JDBC_URL")
     private var dataSource: DataSource? = null
 
-    private fun hikariConfig(): HikariConfig = HikariConfig().apply {
-        jdbcUrl = dbJdbcUrl
-        driverClassName = "org.postgresql.Driver"
-        minimumIdle = 1
-        maxLifetime = 1800000
-        maximumPoolSize = 10
-        connectionTimeout = 100000
-        idleTimeout = 100000
-        isAutoCommit = false
-        transactionIsolation = "TRANSACTION_REPEATABLE_READ"
-    }
+    private fun hikariConfig(): HikariConfig =
+        HikariConfig().apply {
+            jdbcUrl = dbJdbcUrl
+            driverClassName = "org.postgresql.Driver"
+            minimumIdle = 1
+            maxLifetime = 1800000
+            maximumPoolSize = 10
+            connectionTimeout = 100000
+            idleTimeout = 100000
+            isAutoCommit = false
+            transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+        }
 
     override fun retrieveAuditLogSyncStatusesAsMap(): MutableMap<LocalDate, List<AuditLogSyncStatus>> {
         openConnection()
         val database = Database.connect(dataSource!!)
-        val result = transaction(database) {
-            AuditLogSyncStatusTable.selectAll()
-                .map { it.toAuditLogSyncStatus() }
-                .groupBy { it.syncDate }
-                .toMutableMap()
-        }
+        val result =
+            transaction(database) {
+                AuditLogSyncStatusTable
+                    .selectAll()
+                    .map { it.toAuditLogSyncStatus() }
+                    .groupBy { it.syncDate }
+                    .toMutableMap()
+            }
         return result
     }
 
-    override fun insertAuditLogSyncStatus(eventDate: LocalDate, syncDate: LocalDate, entity: String, numberOfRecords: Int): Boolean {
+    override fun insertAuditLogSyncStatus(
+        eventDate: LocalDate,
+        syncDate: LocalDate,
+        entity: String,
+        numberOfRecords: Int,
+    ): Boolean {
         var result = false
         openConnection()
         try {
@@ -62,7 +70,9 @@ class DefaultPostgresDatabase : PostgresDatabase {
                     it[AuditLogSyncStatusTable.numberOfRecords] = numberOfRecords
                 }
             }
-            log.info { "Finish upsering audit log sync status for eventDate: $eventDate, entity: $entity, numberOfRecords: $numberOfRecords" }
+            log.info {
+                "Finish upsering audit log sync status for eventDate: $eventDate, entity: $entity, numberOfRecords: $numberOfRecords"
+            }
             result = true
         } catch (e: Exception) {
             log.error(e) { "Error while upserting audit log sync status for eventDate: $eventDate, entity: $entity" }
@@ -73,13 +83,14 @@ class DefaultPostgresDatabase : PostgresDatabase {
     override fun fetchAuditLogSyncStatus(eventDate: LocalDate): List<AuditLogSyncStatus> {
         openConnection()
         val database = Database.connect(dataSource!!)
-        val result = transaction(database) {
-            AuditLogSyncStatusTable.selectAll()
-                .where {
-                    (AuditLogSyncStatusTable.eventDate eq eventDate)
-                }
-                .map { it.toAuditLogSyncStatus() }
-        }
+        val result =
+            transaction(database) {
+                AuditLogSyncStatusTable
+                    .selectAll()
+                    .where {
+                        (AuditLogSyncStatusTable.eventDate eq eventDate)
+                    }.map { it.toAuditLogSyncStatus() }
+            }
         return result
     }
 

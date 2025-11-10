@@ -12,18 +12,21 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class DefaultSalesforceClientTest {
-
-    private val accessTokenHandler: AccessTokenHandler = mockk<AccessTokenHandler> {
-        every { accessToken } returns "mockAccessToken"
-        every { instanceUrl } returns "https://mock-instance-url.com"
-        every { tenantId } returns "mockTenantId"
-    }
+    private val accessTokenHandler: AccessTokenHandler =
+        mockk<AccessTokenHandler> {
+            every { accessToken } returns "mockAccessToken"
+            every { instanceUrl } returns "https://mock-instance-url.com"
+            every { tenantId } returns "mockTenantId"
+        }
     private val client = mockk<(Request) -> Response>()
     private val classUnderTest = DefaultSalesforceClient(accessTokenHandler, client)
 
     @Test
     fun `should return one uri event when Salesforce query returns one event`() {
-        val mockResponseBody = "{\"totalSize\":1,\"done\":true,\"records\":[{\"EventDate\": \"2025-04-24T13:19:30.102+0000\",\"Operation\": \"Read\",\"QueriedEntities\": \"Account\",\"RecordId\": \"0015t00000xYQl6AAG\",\"Username\": \"user@nav.no.sit2\",\"UserType\": \"Standard\"}]}"
+        val mockResponseBody =
+            "{\"totalSize\":1,\"done\":true,\"records\":[{\"EventDate\": \"2025-04-24T13:19:30.102+0000\"" +
+                ",\"Operation\": \"Read\",\"QueriedEntities\": \"Account\",\"RecordId\": \"0015t00000xYQl6AAG\"" +
+                ",\"Username\": \"user@nav.no.sit2\",\"UserType\": \"Standard\"}]}"
         val mockResponse = Response(Status.OK).body(mockResponseBody)
         every { client(any()) } returns mockResponse
 
@@ -34,7 +37,9 @@ class DefaultSalesforceClientTest {
     @Test
     fun `should return a map with one person ident when one of the two accounts has a person ident in Salesforce`() {
         // only the first account has a person ident
-        val mockResponseBody = "[{\"recordId\":\"0015t00000HvTteAAF\",\"personIdent\":\"14097018384\"},{\"recordId\":\"0015t00000I34yqAAB\",\"personIdent\":null}]"
+        val mockResponseBody =
+            "[{\"recordId\":\"0015t00000HvTteAAF\",\"personIdent\":\"14097018384\"}," +
+                "{\"recordId\":\"0015t00000I34yqAAB\",\"personIdent\":null}]"
         val mockResponse = Response(Status.OK).body(mockResponseBody)
         every { client(any()) } returns mockResponse
 
@@ -52,7 +57,9 @@ class DefaultSalesforceClientTest {
         for (i in 1..22100) {
             recordIds.add("0015t00000HvTteAAF$i")
         }
-        val mockResponseBody = "[{\"recordId\":\"0015t00000HvTteAAF\",\"personIdent\":\"14097018384\"},{\"recordId\":\"0015t00000I34yqAAB\",\"personIdent\":\"10108000398\"}]"
+        val mockResponseBody =
+            "[{\"recordId\":\"0015t00000HvTteAAF\",\"personIdent\":\"14097018384\"}," +
+                "{\"recordId\":\"0015t00000I34yqAAB\",\"personIdent\":\"10108000398\"}]"
 
         val mockResponse = Response(Status.OK).body(mockResponseBody)
         every { client(any()) } returns mockResponse

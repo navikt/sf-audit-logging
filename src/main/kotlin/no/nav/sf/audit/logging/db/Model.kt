@@ -12,7 +12,7 @@ data class AuditLogSyncStatus(
     val eventDate: LocalDate,
     val syncDate: LocalDate,
     val entity: String,
-    val numberOfRecords: Int
+    val numberOfRecords: Int,
 )
 
 object AuditLogSyncStatusTable : Table("audit_log_status") {
@@ -23,12 +23,14 @@ object AuditLogSyncStatusTable : Table("audit_log_status") {
     val numberOfRecords = integer("number_of_records")
 }
 
-fun ResultRow.toAuditLogSyncStatus() = AuditLogSyncStatus(
-    eventDate = this[AuditLogSyncStatusTable.eventDate],
-    syncDate = this[AuditLogSyncStatusTable.syncDate],
-    entity = this[AuditLogSyncStatusTable.entity],
-    numberOfRecords = this[AuditLogSyncStatusTable.numberOfRecords]
-)
+fun ResultRow.toAuditLogSyncStatus() =
+    AuditLogSyncStatus(
+        eventDate = this[AuditLogSyncStatusTable.eventDate],
+        syncDate = this[AuditLogSyncStatusTable.syncDate],
+        entity = this[AuditLogSyncStatusTable.entity],
+        numberOfRecords = this[AuditLogSyncStatusTable.numberOfRecords],
+    )
+
 fun getMetaData(postgresDatabase: PostgresDatabase = if (local) MockPostgresDatabase() else DefaultPostgresDatabase()): String {
     val auditLogSyncStatuses = postgresDatabase.retrieveAuditLogSyncStatusesAsMap()
     val now = LocalDateTime.now()

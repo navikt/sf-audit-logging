@@ -38,17 +38,18 @@ object Application : KoinComponent {
 
     fun apiServer(port: Int): Http4kServer = api().asServer(Netty(port))
 
-    fun api(): HttpHandler = routes(
-        "/internal/isAlive" bind Method.GET to { Response(OK) },
-        "/internal/isReady" bind Method.GET to { Response(OK) },
-        "/internal/metrics" bind Method.GET to Metrics.metricsHttpHandler,
-        "/internal/gui" bind Method.GET to static(ResourceLoader.Classpath("gui")),
-        "/internal/guiLabel" bind Method.GET to { Response(OK).body(context) },
-        "/internal/metadata" bind Method.GET to metaDataHandler,
-        "/internal/fetchAndLog" bind Method.GET to auditLogHandler,
-        "/internal/clearDb" bind Method.GET to clearDbHandler,
-        "/internal/initDb" bind Method.GET to initDbHandler
-    )
+    fun api(): HttpHandler =
+        routes(
+            "/internal/isAlive" bind Method.GET to { Response(OK) },
+            "/internal/isReady" bind Method.GET to { Response(OK) },
+            "/internal/metrics" bind Method.GET to Metrics.metricsHttpHandler,
+            "/internal/gui" bind Method.GET to static(ResourceLoader.Classpath("gui")),
+            "/internal/guiLabel" bind Method.GET to { Response(OK).body(context) },
+            "/internal/metadata" bind Method.GET to metaDataHandler,
+            "/internal/fetchAndLog" bind Method.GET to auditLogHandler,
+            "/internal/clearDb" bind Method.GET to clearDbHandler,
+            "/internal/initDb" bind Method.GET to initDbHandler,
+        )
 
     fun start() {
         startKoin {
@@ -71,7 +72,15 @@ object Application : KoinComponent {
             log.info("Audit log job is already active, cannot start a new one")
             Response(OK).body("Audit log job is already active, cannot start a new one")
         } else {
-            AuditLogJob.activateFetchAndLog(eventDate, entity, offset, salesforceClient, postgresDatabase, auditLogSyncJobMonitor, auditLogPublisher)
+            AuditLogJob.activateFetchAndLog(
+                eventDate,
+                entity,
+                offset,
+                salesforceClient,
+                postgresDatabase,
+                auditLogSyncJobMonitor,
+                auditLogPublisher,
+            )
             Response(OK).body("Start logging for event date $eventDate and entity $entity")
         }
     }

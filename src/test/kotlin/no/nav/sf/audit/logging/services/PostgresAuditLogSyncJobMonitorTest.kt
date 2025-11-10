@@ -20,16 +20,15 @@ class PostgresAuditLogSyncJobMonitorTest {
 
     @Test
     fun `Should throw an error if audit logs already has been logged on the same day`() {
-
         every { postgresDatabase.fetchAuditLogSyncStatus(any()) }.returns(
             listOf(
                 AuditLogSyncStatus(
                     eventDate = LocalDate.now().minusDays(1),
                     syncDate = LocalDate.now(),
                     entity = "Account",
-                    numberOfRecords = 1
-                )
-            )
+                    numberOfRecords = 1,
+                ),
+            ),
         )
         assertThrows<IllegalStateException> {
             classUnderTest.verifyJobIsNotAlreadyRan(LocalDate.now(), "All")
@@ -44,9 +43,9 @@ class PostgresAuditLogSyncJobMonitorTest {
                     eventDate = LocalDate.now().minusDays(1),
                     syncDate = LocalDate.now(),
                     entity = "Case",
-                    numberOfRecords = 1
-                )
-            )
+                    numberOfRecords = 1,
+                ),
+            ),
         )
         classUnderTest.verifyJobIsNotAlreadyRan(LocalDate.now(), "Account")
     }
@@ -54,7 +53,7 @@ class PostgresAuditLogSyncJobMonitorTest {
     @Test
     fun `Should not throw an error when no audit log sync records are found for today`() {
         every { postgresDatabase.fetchAuditLogSyncStatus(any()) }.returns(
-            emptyList()
+            emptyList(),
         )
         classUnderTest.verifyJobIsNotAlreadyRan(LocalDate.now(), "All")
     }

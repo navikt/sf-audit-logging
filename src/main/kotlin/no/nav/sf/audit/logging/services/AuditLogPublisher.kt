@@ -5,5 +5,9 @@ import no.nav.sf.audit.logging.model.UriEvent
 import no.nav.sf.audit.logging.model.UriEventsSummary
 
 interface AuditLogPublisher {
-    fun publishLogs(uriEvents: List<UriEvent>, personIdentsResponse: PersonIdentsResponse, offset: Int): UriEventsSummary
+    fun publishLogs(
+        uriEvents: List<UriEvent>,
+        personIdentsResponse: PersonIdentsResponse,
+        offset: Int,
+    ): UriEventsSummary
 }
