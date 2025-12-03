@@ -18,6 +18,7 @@ jobs:
         id: docker-push
         with:
           team: platforce
+          dockerfile: Dockerfile-job
   deploy-dev:
     name: Deploy job to dev-gcp
     needs: build
