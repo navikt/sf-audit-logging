@@ -75,11 +75,6 @@ sourceSets {
     test.kotlin.srcDirs += 'src/test/kotlin'
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
-    kotlinOptions.jvmTarget = "21"
-}
-
-tasks.withType(JavaCompile) {
-    sourceCompatibility = "21"
-    targetCompatibility = "21"
+kotlin {
+    jvmToolchain(21)
 }

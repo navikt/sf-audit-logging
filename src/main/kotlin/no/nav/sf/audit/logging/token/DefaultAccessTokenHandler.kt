@@ -56,7 +56,7 @@ class DefaultAccessTokenHandler : AccessTokenHandler {
 
     private fun fetchAccessTokenAndInstanceUrl(): Triple<String, String, String> {
         if (System.currentTimeMillis() < expireTime) {
-            log.debug { "Using cached access token (${(expireTime - System.currentTimeMillis()) / 60000} min left)" }
+            log.debug { "Using cached access token  (${(expireTime - System.currentTimeMillis()) / 60000} min left)" }
             return lastTokenTriplet
         }
 
