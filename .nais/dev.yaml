@@ -35,7 +35,7 @@ spec:
         databases:
           - name: sf-audit-logging-dev
   ingresses:
-    - "https://sf-audit-logging-tmp.intern.dev.nav.no"
+    - "https://sf-audit-logging.intern.dev.nav.no"
   accessPolicy:
     inbound:
       rules:
