@@ -1,8 +1,9 @@
-
 name: Build, push, and deploy
 
 on:
   push:
+    branches-ignore:
+      - 'chore/**'
     paths-ignore:
       - README.md
       - Dockerfile-job
