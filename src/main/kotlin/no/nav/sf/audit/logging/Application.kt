@@ -9,6 +9,7 @@ import no.nav.sf.audit.logging.plugins.configureGson
 import no.nav.sf.audit.logging.salesforce.SalesforceClient
 import no.nav.sf.audit.logging.services.AuditLogPublisher
 import no.nav.sf.audit.logging.services.AuditLogSyncJobMonitor
+import no.nav.sf.audit.logging.token.NewAccessTokenHandler
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Response
@@ -49,6 +50,7 @@ object Application : KoinComponent {
             "/internal/fetchAndLog" bind Method.GET to auditLogHandler,
             "/internal/clearDb" bind Method.GET to clearDbHandler,
             "/internal/initDb" bind Method.GET to initDbHandler,
+            "/internal/testAccess/new" bind Method.GET to testAccessHandlerNew,
         )
 
     fun start() {
@@ -99,5 +101,10 @@ object Application : KoinComponent {
         postgresDatabase.createStatusTable(false)
         postgresDatabase.closeConnection()
         Response(OK).body("Table created")
+    }
+
+    private val testAccessHandlerNew: HttpHandler = {
+        val newAccessTokenHandler = NewAccessTokenHandler()
+        Response(OK).body("Test access (new) successful: " + newAccessTokenHandler.testAccess())
     }
 }
