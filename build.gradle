@@ -42,6 +42,7 @@ dependencies {
     implementation "io.github.microutils:kotlin-logging:3.0.5"
     implementation "ch.qos.logback:logback-classic:1.5.34"
     implementation "net.logstash.logback:logstash-logback-encoder:9.0"
+    implementation "tools.jackson.core:jackson-databind:3.1.5" // Transitive dependency for net.logstash.logback:logstash-logback-encoder:9.0
     implementation "tools.jackson.core:jackson-core:3.1.5" //Transient dep
 
     implementation "io.prometheus:simpleclient_common:0.9.0"
@@ -54,7 +55,7 @@ dependencies {
     implementation 'org.jetbrains.exposed:exposed-jdbc:0.46.0'
     implementation 'org.jetbrains.exposed:exposed-java-time:0.46.0'
 
-    implementation "com.zaxxer:HikariCP:3.4.1"
+    implementation "com.zaxxer:HikariCP:5.0.1"
     implementation "io.insert-koin:koin-core:3.5.3"
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.4'
